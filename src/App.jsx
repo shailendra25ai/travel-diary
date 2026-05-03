@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import CreateTrip from './pages/CreateTrip'
 import Trip from './pages/Trip'
 import JoinTrip from './pages/JoinTrip'
+import AddEntry from './pages/AddEntry'
 
 function App() {
   const { user, loading } = useAuthState()
@@ -23,6 +24,7 @@ function App() {
       <Route path="/home" element={user ? <Home user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/create" element={user ? <CreateTrip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId" element={user ? <Trip user={user} /> : <Navigate to="/" />} />
+      <Route path="/trips/:tripId/entries/add" element={user ? <AddEntry user={user} /> : <Navigate to="/" />} />
       <Route path="/join/:inviteCode" element={<JoinTrip user={user} />} />
     </Routes>
   )

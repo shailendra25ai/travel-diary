@@ -1,13 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '../firebase'
+
+function getDaysBetween(startDate, endDate) {
+  const days = []
+  const start = new Date(startDate)
+  const end = endDate ? new Date(endDate) : new Date()
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    days.push(new Date(d).toISOString().split('T')[0])
+  }
+  return days
+}
+
+function formatDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long' })
+}
 
 export default function Trip({ user }) {
   const { tripId } = useParams()
   const navigate = useNavigate()
   const [trip, setTrip] = useState(null)
+  const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const fetchTrip = async () => {
@@ -20,6 +37,14 @@ export default function Trip({ user }) {
     fetchTrip()
   }, [tripId])
 
+  useEffect(() => {
+    const q = query(collection(db, 'trips', tripId, 'entries'), orderBy('createdAt', 'asc'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setEntries(snapshot.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+    return unsubscribe
+  }, [tripId])
+
   if (loading) return <div style={styles.center}><p>Loading trip...</p></div>
   if (!trip) return <div style={styles.center}><p>Trip not found.</p></div>
 
@@ -27,14 +52,21 @@ export default function Trip({ user }) {
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteLink)
-    alert('Invite link copied! Share it with your travel group.')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
-  const formatDate = (d) => {
-    if (!d) return ''
-    const date = new Date(d)
-    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
-  }
+  const days = getDaysBetween(trip.startDate, trip.openEnded ? null : trip.endDate)
+  const today = new Date().toISOString().split('T')[0]
+  const visibleDays = trip.openEnded ? days.filter(d => d <= today) : days
+
+  const entriesByDay = {}
+  entries.forEach(entry => {
+    if (!entriesByDay[entry.date]) entriesByDay[entry.date] = []
+    entriesByDay[entry.date].push(entry)
+  })
+
+  const myEntryDates = new Set(entries.filter(e => e.userId === user.uid).map(e => e.date))
 
   return (
     <div style={styles.container}>
@@ -55,32 +87,87 @@ export default function Trip({ user }) {
           {trip.openEnded ? ' · Open-ended' : trip.endDate ? ` → ${formatDate(trip.endDate)}` : ''}
         </p>
 
-        <div style={styles.members}>
-          <p style={styles.sectionLabel}>Members ({trip.members.length})</p>
-          <div style={styles.memberRow}>
-            {Object.values(trip.memberDetails || {}).map((m, i) => (
-              <div key={i} style={styles.member}>
-                <img src={m.photo} alt={m.name} style={styles.memberAvatar} />
-                <span style={styles.memberName}>{m.name.split(' ')[0]}</span>
+        <div style={styles.memberRow}>
+          {Object.values(trip.memberDetails || {}).map((m, i) => (
+            <img key={i} src={m.photo} alt={m.name} title={m.name} style={styles.memberAvatar} />
+          ))}
+          <button onClick={handleCopyLink} style={styles.inviteBtn}>
+            {copied ? 'Copied!' : '+ Invite'}
+          </button>
+        </div>
+
+        <div style={styles.timeline}>
+          {visibleDays.map(day => {
+            const dayEntries = entriesByDay[day] || []
+            const myEntry = dayEntries.find(e => e.userId === user.uid)
+            const othersEntries = dayEntries.filter(e => e.userId !== user.uid)
+
+            return (
+              <div key={day} style={styles.dayBlock}>
+                <div style={styles.dayHeader}>
+                  <span style={styles.dayLabel}>{formatDate(day)}</span>
+                  {!myEntryDates.has(day) && (
+                    <button
+                      onClick={() => navigate(`/trips/${tripId}/entries/add?date=${day}`)}
+                      style={styles.addEntryBtn}
+                    >
+                      + Add my entry
+                    </button>
+                  )}
+                </div>
+
+                {dayEntries.length === 0 && (
+                  <p style={styles.noEntry}>No entries yet for this day.</p>
+                )}
+
+                {myEntry && <EntryCard entry={myEntry} isMe={true} />}
+                {othersEntries.map(entry => (
+                  <EntryCard key={entry.id} entry={entry} isMe={false} />
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={styles.inviteBox}>
-          <p style={styles.sectionLabel}>Invite your travel group</p>
-          <p style={styles.inviteHint}>Share this link — anyone with it can join your trip.</p>
-          <div style={styles.linkRow}>
-            <span style={styles.linkText}>{inviteLink}</span>
-            <button onClick={handleCopyLink} style={styles.copyBtn}>Copy</button>
-          </div>
-        </div>
-
-        <div style={styles.entriesPlaceholder}>
-          <p style={styles.sectionLabel}>Diary entries</p>
-          <p style={styles.hint}>Daily entries will appear here. Coming up next!</p>
+            )
+          })}
         </div>
       </div>
+    </div>
+  )
+}
+
+function EntryCard({ entry, isMe }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div style={styles.entryCard}>
+      <div style={styles.entryHeader}>
+        <img src={entry.userPhoto} alt={entry.userName} style={styles.entryAvatar} />
+        <div>
+          <p style={styles.entryName}>{isMe ? 'You' : entry.userName.split(' ')[0]}</p>
+          {entry.location && <p style={styles.entryLocation}>📍 {entry.location}</p>}
+        </div>
+      </div>
+
+      {entry.photoURLs?.length > 0 && (
+        <div style={styles.photoGrid}>
+          {entry.photoURLs.map((url, i) => (
+            <img key={i} src={url} alt={`Photo ${i + 1}`} style={styles.entryPhoto} />
+          ))}
+        </div>
+      )}
+
+      {entry.text && (
+        <div>
+          <p style={styles.entryText}>
+            {expanded || entry.text.length <= 200
+              ? entry.text
+              : entry.text.slice(0, 200) + '...'}
+          </p>
+          {entry.text.length > 200 && (
+            <button onClick={() => setExpanded(!expanded)} style={styles.readMore}>
+              {expanded ? 'Show less' : 'Read more'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -98,24 +185,32 @@ const styles = {
   cover: { width: '100%', height: '220px', objectFit: 'cover' },
   body: { maxWidth: '600px', margin: '0 auto', padding: '24px' },
   tripTitle: { fontSize: '1.8rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' },
-  dates: { fontSize: '0.95rem', color: '#888', marginBottom: '28px' },
-  sectionLabel: { fontSize: '0.8rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' },
-  members: { marginBottom: '28px' },
-  memberRow: { display: 'flex', gap: '16px', flexWrap: 'wrap' },
-  member: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' },
-  memberAvatar: { width: '44px', height: '44px', borderRadius: '50%' },
-  memberName: { fontSize: '0.8rem', color: '#555' },
-  inviteBox: {
-    backgroundColor: '#fff', borderRadius: '12px', padding: '20px',
-    marginBottom: '28px', border: '1px solid #eee',
+  dates: { fontSize: '0.95rem', color: '#888', marginBottom: '16px' },
+  memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px', flexWrap: 'wrap' },
+  memberAvatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #fff', boxShadow: '0 0 0 1px #eee' },
+  inviteBtn: {
+    fontSize: '0.8rem', color: '#555', backgroundColor: '#f0f0f0',
+    border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',
   },
-  inviteHint: { fontSize: '0.9rem', color: '#666', marginBottom: '12px' },
-  linkRow: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f4f4f4', borderRadius: '8px', padding: '10px 14px' },
-  linkText: { fontSize: '0.8rem', color: '#555', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  copyBtn: {
-    backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
-    borderRadius: '6px', padding: '6px 14px', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap',
+  timeline: { display: 'flex', flexDirection: 'column', gap: '24px' },
+  dayBlock: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  dayHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  dayLabel: { fontSize: '0.85rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  addEntryBtn: {
+    fontSize: '0.8rem', color: '#fff', backgroundColor: '#1a1a1a',
+    border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',
   },
-  entriesPlaceholder: { backgroundColor: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #eee', textAlign: 'center' },
-  hint: { fontSize: '0.9rem', color: '#aaa', marginTop: '4px' },
+  noEntry: { fontSize: '0.9rem', color: '#ccc', fontStyle: 'italic' },
+  entryCard: {
+    backgroundColor: '#fff', borderRadius: '12px', padding: '16px',
+    border: '1px solid #eee', display: 'flex', flexDirection: 'column', gap: '12px',
+  },
+  entryHeader: { display: 'flex', alignItems: 'center', gap: '10px' },
+  entryAvatar: { width: '36px', height: '36px', borderRadius: '50%' },
+  entryName: { fontSize: '0.95rem', fontWeight: '600', color: '#1a1a1a' },
+  entryLocation: { fontSize: '0.8rem', color: '#888' },
+  photoGrid: { display: 'flex', gap: '6px', flexWrap: 'wrap' },
+  entryPhoto: { width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' },
+  entryText: { fontSize: '0.95rem', color: '#444', lineHeight: '1.6' },
+  readMore: { background: 'none', border: 'none', color: '#888', fontSize: '0.85rem', cursor: 'pointer', padding: 0, marginTop: '4px' },
 }
