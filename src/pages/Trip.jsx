@@ -116,6 +116,10 @@ export default function Trip({ user }) {
           </button>
         </div>
 
+        <button onClick={() => navigate(`/trips/${tripId}/recap`)} style={styles.recapBtn}>
+          ✨ Generate AI Recap
+        </button>
+
         <div style={styles.timeline}>
           {visibleDays.map(day => (
             <DayBlock
@@ -263,6 +267,11 @@ const styles = {
   dates: { fontSize: '0.95rem', color: '#888', marginBottom: '16px' },
   memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' },
   memberAvatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #fff', boxShadow: '0 0 0 1px #eee' },
+  recapBtn: {
+    width: '100%', backgroundColor: '#fff', color: '#1a1a1a',
+    border: '1.5px solid #1a1a1a', borderRadius: '8px', padding: '12px',
+    fontSize: '0.95rem', fontWeight: '600', cursor: 'pointer', marginBottom: '24px',
+  },
   inviteBtn: {
     fontSize: '0.8rem', color: '#555', backgroundColor: '#f0f0f0',
     border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',

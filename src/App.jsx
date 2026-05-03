@@ -6,6 +6,8 @@ import CreateTrip from './pages/CreateTrip'
 import Trip from './pages/Trip'
 import JoinTrip from './pages/JoinTrip'
 import AddEntry from './pages/AddEntry'
+import GenerateRecap from './pages/GenerateRecap'
+import ShareRecap from './pages/ShareRecap'
 
 function App() {
   const { user, loading } = useAuthState()
@@ -25,7 +27,9 @@ function App() {
       <Route path="/trips/create" element={user ? <CreateTrip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId" element={user ? <Trip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId/entries/add" element={user ? <AddEntry user={user} /> : <Navigate to="/" />} />
+      <Route path="/trips/:tripId/recap" element={user ? <GenerateRecap user={user} /> : <Navigate to="/" />} />
       <Route path="/join/:inviteCode" element={<JoinTrip user={user} />} />
+      <Route path="/share/:shareCode" element={<ShareRecap />} />
     </Routes>
   )
 }
