@@ -18,6 +18,11 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long' })
 }
 
+function formatLongDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 export default function Trip({ user }) {
   const { tripId } = useParams()
   const navigate = useNavigate()
@@ -25,6 +30,7 @@ export default function Trip({ user }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [view, setView] = useState('timeline')
 
   useEffect(() => {
     const fetchTrip = async () => {
@@ -49,7 +55,6 @@ export default function Trip({ user }) {
   if (!trip) return <div style={styles.center}><p>Trip not found.</p></div>
 
   const inviteLink = `${window.location.origin}/join/${trip.inviteCode}`
-
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteLink)
     setCopied(true)
@@ -96,39 +101,109 @@ export default function Trip({ user }) {
           </button>
         </div>
 
+        <div style={styles.viewToggle}>
+          <button
+            style={view === 'timeline' ? styles.toggleActive : styles.toggleInactive}
+            onClick={() => setView('timeline')}
+          >
+            My Timeline
+          </button>
+          <button
+            style={view === 'combined' ? styles.toggleActive : styles.toggleInactive}
+            onClick={() => setView('combined')}
+          >
+            Everyone
+          </button>
+        </div>
+
         <div style={styles.timeline}>
-          {visibleDays.map(day => {
-            const dayEntries = entriesByDay[day] || []
-            const myEntry = dayEntries.find(e => e.userId === user.uid)
-            const othersEntries = dayEntries.filter(e => e.userId !== user.uid)
-
-            return (
-              <div key={day} style={styles.dayBlock}>
-                <div style={styles.dayHeader}>
-                  <span style={styles.dayLabel}>{formatDate(day)}</span>
-                  {!myEntryDates.has(day) && (
-                    <button
-                      onClick={() => navigate(`/trips/${tripId}/entries/add?date=${day}`)}
-                      style={styles.addEntryBtn}
-                    >
-                      + Add my entry
-                    </button>
-                  )}
-                </div>
-
-                {dayEntries.length === 0 && (
-                  <p style={styles.noEntry}>No entries yet for this day.</p>
-                )}
-
-                {myEntry && <EntryCard entry={myEntry} isMe={true} />}
-                {othersEntries.map(entry => (
-                  <EntryCard key={entry.id} entry={entry} isMe={false} />
-                ))}
-              </div>
-            )
-          })}
+          {visibleDays.map(day => (
+            <DayBlock
+              key={day}
+              day={day}
+              dayEntries={entriesByDay[day] || []}
+              userId={user.uid}
+              hasMyEntry={myEntryDates.has(day)}
+              onAddEntry={() => navigate(`/trips/${tripId}/entries/add?date=${day}`)}
+              view={view}
+            />
+          ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+function DayBlock({ day, dayEntries, userId, hasMyEntry, onAddEntry, view }) {
+  const myEntry = dayEntries.find(e => e.userId === userId)
+  const othersEntries = dayEntries.filter(e => e.userId !== userId)
+  const allMembers = dayEntries
+
+  const [activeMemberId, setActiveMemberId] = useState(userId)
+
+  const activeEntry = dayEntries.find(e => e.userId === activeMemberId) || null
+
+  if (view === 'combined') {
+    return (
+      <div style={styles.dayBlock}>
+        <div style={styles.dayHeader}>
+          <span style={styles.dayLabel}>{formatLongDate(day)}</span>
+          {!hasMyEntry && (
+            <button onClick={onAddEntry} style={styles.addEntryBtn}>+ Add mine</button>
+          )}
+        </div>
+        {dayEntries.length === 0 && (
+          <p style={styles.noEntry}>No entries yet for this day.</p>
+        )}
+        {dayEntries.map(entry => (
+          <EntryCard key={entry.id} entry={entry} isMe={entry.userId === userId} />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div style={styles.dayBlock}>
+      <div style={styles.dayHeader}>
+        <span style={styles.dayLabel}>{formatLongDate(day)}</span>
+        {!hasMyEntry && (
+          <button onClick={onAddEntry} style={styles.addEntryBtn}>+ Add my entry</button>
+        )}
+      </div>
+
+      {dayEntries.length === 0 && (
+        <p style={styles.noEntry}>No entries yet for this day.</p>
+      )}
+
+      {dayEntries.length > 0 && (
+        <>
+          {dayEntries.length > 1 && (
+            <div style={styles.perspectiveRow}>
+              <span style={styles.perspectiveLabel}>Perspective:</span>
+              {dayEntries.map(entry => (
+                <button
+                  key={entry.userId}
+                  onClick={() => setActiveMemberId(entry.userId)}
+                  style={{
+                    ...styles.perspectiveAvatar,
+                    outline: activeMemberId === entry.userId ? '2px solid #1a1a1a' : '2px solid transparent',
+                  }}
+                  title={entry.userId === userId ? 'You' : entry.userName.split(' ')[0]}
+                >
+                  <img src={entry.userPhoto} alt={entry.userName} style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {activeEntry
+            ? <EntryCard entry={activeEntry} isMe={activeEntry.userId === userId} />
+            : myEntry
+              ? <EntryCard entry={myEntry} isMe={true} />
+              : <EntryCard entry={othersEntries[0]} isMe={false} />
+          }
+        </>
+      )}
     </div>
   )
 }
@@ -186,21 +261,41 @@ const styles = {
   body: { maxWidth: '600px', margin: '0 auto', padding: '24px' },
   tripTitle: { fontSize: '1.8rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' },
   dates: { fontSize: '0.95rem', color: '#888', marginBottom: '16px' },
-  memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px', flexWrap: 'wrap' },
+  memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' },
   memberAvatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #fff', boxShadow: '0 0 0 1px #eee' },
   inviteBtn: {
     fontSize: '0.8rem', color: '#555', backgroundColor: '#f0f0f0',
     border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',
   },
-  timeline: { display: 'flex', flexDirection: 'column', gap: '24px' },
+  viewToggle: {
+    display: 'flex', backgroundColor: '#ede9e3', borderRadius: '10px',
+    padding: '4px', marginBottom: '24px', gap: '4px',
+  },
+  toggleActive: {
+    flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
+    backgroundColor: '#fff', fontWeight: '600', fontSize: '0.9rem',
+    color: '#1a1a1a', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+  },
+  toggleInactive: {
+    flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
+    backgroundColor: 'transparent', fontWeight: '500', fontSize: '0.9rem',
+    color: '#888', cursor: 'pointer',
+  },
+  timeline: { display: 'flex', flexDirection: 'column', gap: '28px' },
   dayBlock: { display: 'flex', flexDirection: 'column', gap: '12px' },
   dayHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  dayLabel: { fontSize: '0.85rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  dayLabel: { fontSize: '0.82rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' },
   addEntryBtn: {
     fontSize: '0.8rem', color: '#fff', backgroundColor: '#1a1a1a',
     border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',
   },
   noEntry: { fontSize: '0.9rem', color: '#ccc', fontStyle: 'italic' },
+  perspectiveRow: { display: 'flex', alignItems: 'center', gap: '8px' },
+  perspectiveLabel: { fontSize: '0.8rem', color: '#aaa' },
+  perspectiveAvatar: {
+    width: '32px', height: '32px', borderRadius: '50%', padding: 0,
+    border: 'none', cursor: 'pointer', outlineOffset: '2px', background: 'none',
+  },
   entryCard: {
     backgroundColor: '#fff', borderRadius: '12px', padding: '16px',
     border: '1px solid #eee', display: 'flex', flexDirection: 'column', gap: '12px',
