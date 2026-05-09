@@ -117,6 +117,8 @@ export default function ShareRecap() {
       {template === 'magazine' && <MagazineTemplate {...sharedProps} />}
       {template === 'storybook' && <StorybookTemplate {...sharedProps} />}
       {template === 'polaroid' && <PolaroidTemplate {...sharedProps} />}
+      {template === 'splitpov' && <SplitPOVTemplate {...sharedProps} />}
+      {template === 'stories' && <StoriesTemplate {...sharedProps} />}
 
       <Branding />
     </div>
@@ -316,6 +318,191 @@ function PolaroidTemplate({ recap, recapData, days, isMulti, coverPhoto, memberL
           <p style={s.closing}>{recap.closing}</p>
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ========= SPLIT POV ========= */
+function SplitPOVTemplate({ recap, recapData, days, isMulti, coverPhoto, memberList }) {
+  return (
+    <>
+      {/* Hero */}
+      {coverPhoto ? (
+        <div style={{ ...s.heroSplit, backgroundImage: `url(${coverPhoto})` }}>
+          <div style={s.heroSplitOverlay}>
+            <p style={s.heroSplitTag}>{recapData?.tripTitle}</p>
+            <h1 style={s.heroSplitTitle}>{recap.title}</h1>
+            {isMulti && memberList.length >= 2 && (
+              <div style={s.splitVs}>
+                <div style={s.splitVsMember}>
+                  <img src={memberList[0].userPhoto} alt="" style={s.splitVsAv} />
+                  <span style={s.splitVsName}>{memberList[0].userName.split(' ')[0]}</span>
+                </div>
+                <span style={s.splitVsX}>·</span>
+                <div style={s.splitVsMember}>
+                  <img src={memberList[1].userPhoto} alt="" style={s.splitVsAv} />
+                  <span style={s.splitVsName}>{memberList[1].userName.split(' ')[0]}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div style={s.heroPlain}><h1 style={s.heroTitleDark}>{recap.title}</h1></div>
+      )}
+
+      <div style={s.bodySplit}>
+        <p style={s.summarySplit}>{recap.summary}</p>
+
+        {days.map((day, i) => {
+          // Sort members consistently (always show same order)
+          const member1 = day.entries.find(e => e.userId === memberList[0]?.userId)
+          const member2 = day.entries.find(e => e.userId === memberList[1]?.userId)
+
+          return (
+            <div key={day.date} style={s.splitDay}>
+              <div style={s.splitDayHeader}>
+                <p style={s.splitDayLabel}>{day.dayLabel}</p>
+                <p style={s.splitDayTitle}>Same day. {isMulti ? 'Two views.' : 'Your view.'}</p>
+                <p style={s.splitDayDate}>{formatDate(day.date)}</p>
+              </div>
+
+              {day.aiCaption && (
+                <div style={s.splitCaptionBox}>
+                  <p style={s.splitCaption}>{day.aiCaption}</p>
+                </div>
+              )}
+
+              {isMulti && member1 && member2 ? (
+                <div style={s.splitGrid}>
+                  <SplitSide entry={member1} accent="left" />
+                  <div style={s.splitDivider} />
+                  <SplitSide entry={member2} accent="right" />
+                </div>
+              ) : (
+                <SplitSide entry={day.entries[0]} accent="full" />
+              )}
+            </div>
+          )
+        })}
+
+        <div style={s.closingBox}>
+          <p style={s.closingMark}>~</p>
+          <p style={s.closing}>{recap.closing}</p>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function SplitSide({ entry, accent }) {
+  if (!entry) return null
+  const photos = entry.photoURLs || []
+  const accentColor = accent === 'left' ? '#2d4a8a' : accent === 'right' ? '#a83a4a' : '#1a1a1a'
+
+  return (
+    <div style={s.splitSide}>
+      <div style={{ ...s.splitSideHeader, borderBottomColor: accentColor }}>
+        <img src={entry.userPhoto} alt="" style={s.splitSideAv} />
+        <div>
+          <p style={s.splitSideLabel}>Through</p>
+          <p style={s.splitSideName}>{entry.userName.split(' ')[0]}'s eyes</p>
+        </div>
+      </div>
+
+      {/* Stacked photos */}
+      <div style={s.splitPhotosStack}>
+        {photos.slice(0, 4).map((url, i) => (
+          <img key={i} src={url} alt="" style={s.splitPhoto} />
+        ))}
+      </div>
+
+      {entry.location && (
+        <p style={s.splitLocation}>📍 {entry.location}</p>
+      )}
+
+      {entry.text && (
+        <div style={{ ...s.splitQuote, borderLeftColor: accentColor }}>
+          <p style={s.splitQuoteText}>"{entry.text}"</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ========= STORIES ========= */
+function StoriesTemplate({ recap, recapData, days, isMulti, coverPhoto, memberList }) {
+  return (
+    <div style={s.storiesWrap}>
+      <div style={s.storiesHeader}>
+        <p style={s.storiesTripName}>{recapData?.tripTitle}</p>
+        <h1 style={s.storiesTitle}>{recap.title}</h1>
+        <p style={s.storiesSummary}>{recap.summary}</p>
+        {isMulti && memberList.length > 0 && (
+          <div style={s.storiesMembers}>
+            {memberList.map((m, i) => <img key={i} src={m.userPhoto} alt="" style={s.storiesMemberAv} />)}
+          </div>
+        )}
+      </div>
+
+      <div style={s.storiesGrid}>
+        {days.map((day, i) => (
+          <StoryCard key={day.date} day={day} index={i} totalDays={days.length} isMulti={isMulti} />
+        ))}
+      </div>
+
+      <div style={s.storiesClose}>
+        <p style={s.closingMark}>~</p>
+        <p style={s.closing}>{recap.closing}</p>
+      </div>
+    </div>
+  )
+}
+
+function StoryCard({ day, index, totalDays, isMulti }) {
+  const photo = day.photos[0]
+
+  return (
+    <div style={s.storyCard}>
+      {photo && (
+        <div style={{ ...s.storyBg, backgroundImage: `url(${photo})` }}>
+          <div style={s.storyOverlay}>
+            <div style={s.storyTopRow}>
+              <span style={s.storyDayBadge}>{day.dayLabel} of {totalDays}</span>
+              <span style={s.storyDateBadge}>{formatDate(day.date).split(',')[1]?.trim() || formatDate(day.date)}</span>
+            </div>
+
+            <div style={s.storyTextWrap}>
+              {day.aiCaption && <p style={s.storyCaption}>{day.aiCaption}</p>}
+
+              {isMulti && day.entries.length > 1 ? (
+                <div style={s.storyMembers}>
+                  {day.entries.map((e, i) => (
+                    <div key={i} style={s.storyMember}>
+                      <img src={e.userPhoto} alt="" style={s.storyMemberAv} />
+                      <span style={s.storyMemberName}>{e.userName.split(' ')[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : day.entries[0] && (
+                <div style={s.storySingleMember}>
+                  <img src={day.entries[0].userPhoto} alt="" style={s.storyMemberAv} />
+                  <span style={s.storyMemberName}>{day.entries[0].userName.split(' ')[0]}</span>
+                  {day.entries[0].location && <span style={s.storyLoc}>· 📍 {day.entries[0].location}</span>}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {!photo && (
+        <div style={{ ...s.storyBg, backgroundColor: '#1a1a1a' }}>
+          <div style={s.storyOverlay}>
+            <span style={s.storyDayBadge}>{day.dayLabel}</span>
+            <p style={s.storyCaption}>{day.aiCaption}</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -536,4 +723,78 @@ const s = {
   brandingWrap: { textAlign: 'center', padding: '28px 16px 48px', backgroundColor: '#fff', borderTop: '1px solid #ebe5dc' },
   branding: { fontSize: '0.95rem', fontWeight: '700', color: '#bbb', marginBottom: '4px', fontFamily: 'Georgia, serif' },
   brandingHint: { fontSize: '0.8rem', color: '#ccc' },
+
+  /* SPLIT POV */
+  heroSplit: { width: '100%', height: '480px', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' },
+  heroSplitOverlay: {
+    position: 'absolute', inset: 0,
+    background: 'linear-gradient(135deg, rgba(45,74,138,0.7) 0%, rgba(168,58,74,0.7) 100%)',
+    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '24px',
+  },
+  heroSplitTag: { fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: '14px', fontWeight: '600' },
+  heroSplitTitle: { fontSize: '3rem', fontWeight: '800', color: '#fff', fontFamily: 'Georgia, serif', lineHeight: '1.1', maxWidth: '700px' },
+  splitVs: { display: 'flex', alignItems: 'center', gap: '14px', marginTop: '28px' },
+  splitVsMember: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(255,255,255,0.15)', padding: '8px 14px', borderRadius: '24px', backdropFilter: 'blur(10px)' },
+  splitVsAv: { width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #fff' },
+  splitVsName: { fontSize: '0.9rem', color: '#fff', fontWeight: '700' },
+  splitVsX: { fontSize: '1.5rem', color: '#fff', opacity: 0.6 },
+
+  bodySplit: { maxWidth: '1100px', margin: '0 auto', padding: '0 16px' },
+  summarySplit: { fontSize: '1.15rem', color: '#444', lineHeight: '1.85', fontStyle: 'italic', fontFamily: 'Georgia, serif', textAlign: 'center', padding: '48px 24px 32px', maxWidth: '700px', margin: '0 auto', borderBottom: '1px solid #ebe5dc' },
+
+  splitDay: { padding: '48px 0', borderBottom: '2px solid #ebe5dc' },
+  splitDayHeader: { textAlign: 'center', marginBottom: '24px' },
+  splitDayLabel: { fontSize: '0.78rem', fontWeight: '700', color: '#b09070', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px' },
+  splitDayTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#1a1a1a', fontFamily: 'Georgia, serif', lineHeight: '1.2', marginBottom: '6px' },
+  splitDayDate: { fontSize: '0.85rem', color: '#999' },
+
+  splitCaptionBox: { maxWidth: '720px', margin: '0 auto 32px', padding: '0 16px' },
+  splitCaption: { fontSize: '1.05rem', color: '#444', lineHeight: '1.85', textAlign: 'center', fontStyle: 'italic', fontFamily: 'Georgia, serif' },
+
+  splitGrid: { display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '24px', alignItems: 'flex-start' },
+  splitDivider: { width: '1px', alignSelf: 'stretch', backgroundColor: '#ddd' },
+
+  splitSide: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  splitSideHeader: { display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '14px', borderBottom: '3px solid' },
+  splitSideAv: { width: '52px', height: '52px', borderRadius: '50%' },
+  splitSideLabel: { fontSize: '0.7rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '600', margin: 0 },
+  splitSideName: { fontSize: '1.15rem', fontWeight: '800', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0, marginTop: '2px' },
+
+  splitPhotosStack: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  splitPhoto: { width: '100%', height: '260px', objectFit: 'cover', borderRadius: '10px', display: 'block' },
+  splitLocation: { fontSize: '0.85rem', color: '#888', fontWeight: '500' },
+  splitQuote: { backgroundColor: '#fff', padding: '16px 18px', borderRadius: '10px', borderLeft: '4px solid', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' },
+  splitQuoteText: { fontSize: '1rem', color: '#333', lineHeight: '1.75', fontStyle: 'italic', fontFamily: 'Georgia, serif', margin: 0 },
+
+  /* STORIES */
+  storiesWrap: { backgroundColor: '#fafafa', minHeight: '100vh' },
+  storiesHeader: { textAlign: 'center', padding: '60px 24px 40px', backgroundColor: '#fff' },
+  storiesTripName: { fontSize: '0.78rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '12px', fontWeight: '600' },
+  storiesTitle: { fontSize: '2.4rem', fontWeight: '800', color: '#1a1a1a', fontFamily: 'Georgia, serif', lineHeight: '1.2', marginBottom: '20px' },
+  storiesSummary: { fontSize: '1.05rem', color: '#555', lineHeight: '1.85', fontStyle: 'italic', maxWidth: '560px', margin: '0 auto 20px' },
+  storiesMembers: { display: 'flex', justifyContent: 'center', gap: '8px' },
+  storiesMemberAv: { width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #fff', boxShadow: '0 0 0 1px #ddd' },
+
+  storiesGrid: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '20px', padding: '40px 16px' },
+  storyCard: { width: '320px', height: '568px', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' },
+  storyBg: { width: '100%', height: '100%', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' },
+  storyOverlay: {
+    position: 'absolute', inset: 0,
+    background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.85) 100%)',
+    display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px',
+  },
+  storyTopRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  storyDayBadge: { fontSize: '0.72rem', backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', color: '#fff', padding: '6px 12px', borderRadius: '20px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  storyDateBadge: { fontSize: '0.72rem', color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
+
+  storyTextWrap: { display: 'flex', flexDirection: 'column', gap: '14px' },
+  storyCaption: { fontSize: '1.15rem', color: '#fff', lineHeight: '1.5', fontWeight: '600', fontFamily: 'Georgia, serif', margin: 0 },
+  storyMembers: { display: 'flex', gap: '10px', flexWrap: 'wrap' },
+  storyMember: { display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', padding: '4px 10px 4px 4px', borderRadius: '20px' },
+  storySingleMember: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', padding: '4px 12px 4px 4px', borderRadius: '20px', alignSelf: 'flex-start' },
+  storyMemberAv: { width: '24px', height: '24px', borderRadius: '50%' },
+  storyMemberName: { fontSize: '0.78rem', color: '#fff', fontWeight: '700' },
+  storyLoc: { fontSize: '0.72rem', color: 'rgba(255,255,255,0.85)' },
+
+  storiesClose: { textAlign: 'center', padding: '40px 16px 60px', backgroundColor: '#fff' },
 }

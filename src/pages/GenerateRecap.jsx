@@ -26,6 +26,18 @@ const TEMPLATES = [
     description: 'Casual and warm — photos as polaroids with handwritten-style notes.',
     accent: '#c89060',
   },
+  {
+    id: 'splitpov',
+    name: 'Split POV ⭐',
+    description: 'Same day, two views. Side-by-side comparison — perfect for multi-perspective trips.',
+    accent: '#2d4a8a',
+  },
+  {
+    id: 'stories',
+    name: 'Stories',
+    description: 'Vertical Instagram Story-style cards. Made to screenshot and share to social.',
+    accent: '#e84a8a',
+  },
 ]
 
 export default function GenerateRecap({ user }) {
@@ -196,22 +208,44 @@ function TemplatePreview({ templateId, accent }) {
       </div>
     )
   }
-  // polaroid
-  return (
-    <div style={{ ...styles.previewBox, position: 'relative', height: 64 }}>
-      <div style={{
-        position: 'absolute', left: 4, top: 4, width: 28, height: 32,
-        backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-        transform: 'rotate(-6deg)', padding: 2,
-      }}>
-        <div style={{ width: '100%', height: '70%', backgroundColor: '#ddd' }} />
+  if (templateId === 'polaroid') {
+    return (
+      <div style={{ ...styles.previewBox, position: 'relative', height: 64 }}>
+        <div style={{ position: 'absolute', left: 4, top: 4, width: 28, height: 32, backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', transform: 'rotate(-6deg)', padding: 2 }}>
+          <div style={{ width: '100%', height: '70%', backgroundColor: '#ddd' }} />
+        </div>
+        <div style={{ position: 'absolute', left: 30, top: 10, width: 28, height: 32, backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', transform: 'rotate(4deg)', padding: 2 }}>
+          <div style={{ width: '100%', height: '70%', backgroundColor: '#ccc' }} />
+        </div>
       </div>
-      <div style={{
-        position: 'absolute', left: 30, top: 10, width: 28, height: 32,
-        backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-        transform: 'rotate(4deg)', padding: 2,
-      }}>
-        <div style={{ width: '100%', height: '70%', backgroundColor: '#ccc' }} />
+    )
+  }
+
+  if (templateId === 'splitpov') {
+    return (
+      <div style={styles.previewBox}>
+        <div style={{ display: 'flex', gap: 2, height: '100%' }}>
+          <div style={{ flex: 1, backgroundColor: '#bbb', display: 'flex', flexDirection: 'column', gap: 2, padding: 2 }}>
+            <div style={{ height: '60%', backgroundColor: '#999' }} />
+            <div style={{ height: 3, backgroundColor: '#fff' }} />
+            <div style={{ height: 3, backgroundColor: '#fff', width: '70%' }} />
+          </div>
+          <div style={{ flex: 1, backgroundColor: '#777', display: 'flex', flexDirection: 'column', gap: 2, padding: 2 }}>
+            <div style={{ height: '60%', backgroundColor: '#555' }} />
+            <div style={{ height: 3, backgroundColor: '#fff' }} />
+            <div style={{ height: 3, backgroundColor: '#fff', width: '70%' }} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // stories
+  return (
+    <div style={{ ...styles.previewBox, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ width: 32, height: 56, backgroundColor: '#444', borderRadius: 6, padding: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div style={{ height: 3, backgroundColor: '#fff', borderRadius: 1, marginBottom: 2 }} />
+        <div style={{ height: 3, backgroundColor: '#fff', borderRadius: 1, width: '70%' }} />
       </div>
     </div>
   )
