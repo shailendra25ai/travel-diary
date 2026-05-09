@@ -13,8 +13,7 @@ export default function Login() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <img src="/logo.png" alt="Mosaic" style={styles.logo} />
-        <h1 style={styles.title}>Mosaic</h1>
+        <img src="/logo-stacked.png" alt="Mosaic" style={styles.logo} />
         <p style={styles.tagline}>Many pieces. One unforgettable trip.</p>
         <p style={styles.subtitle}>Capture trips together. Share them beautifully. Relive them forever.</p>
         <button onClick={handleGoogleSignIn} style={styles.button}>
@@ -49,8 +48,8 @@ const styles = {
     width: '100%',
   },
   logo: {
-    width: '72px',
-    height: '72px',
+    width: '160px',
+    height: 'auto',
     marginBottom: '20px',
     objectFit: 'contain',
   },

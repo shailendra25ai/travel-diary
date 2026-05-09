@@ -34,7 +34,7 @@ export default function Home({ user }) {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <img src="/logo.png" alt="Mosaic" style={styles.logoBig} />
+        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} />
         <div style={styles.userRow}>
           <img src={user.photoURL} alt={user.displayName} style={styles.avatar} />
           <button onClick={handleSignOut} style={styles.signOutBtn}>Sign out</button>

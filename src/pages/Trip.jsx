@@ -77,7 +77,7 @@ export default function Trip({ user }) {
     <div style={styles.container}>
       <div style={styles.header}>
         <button onClick={() => navigate('/home')} style={styles.back}>← Back</button>
-        <img src="/logo.png" alt="Mosaic" style={styles.logoBig} />
+        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} />
         <img src={user.photoURL} alt={user.displayName} style={styles.avatar} />
       </div>
 

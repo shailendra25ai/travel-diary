@@ -103,7 +103,7 @@ export default function ShareRecap() {
 
       {/* Action bar */}
       <div style={s.actionBar}>
-        <img src="/logo.png" alt="Mosaic" style={s.actionLogoBig} />
+        <img src="/logo-wide.png" alt="Mosaic" style={s.actionLogoBig} />
         <div style={s.actionBtns}>
           <button onClick={handleCopyLink} style={s.actionBtn}>
             {copied ? '✓ Copied' : '🔗 Copy link'}
@@ -569,7 +569,7 @@ function SingleEntryBox({ entry }) {
 function Branding() {
   return (
     <div style={s.brandingWrap}>
-      <img src="/logo.png" alt="Mosaic" style={s.brandingLogo} />
+      <img src="/logo-icon.png" alt="Mosaic" style={s.brandingLogo} />
       <p style={s.branding}>Made with Mosaic</p>
       <p style={s.brandingHint}>Many pieces. One unforgettable trip.</p>
     </div>

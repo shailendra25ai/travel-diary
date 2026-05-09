@@ -68,8 +68,7 @@ export default function JoinTrip({ user }) {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <img src="/logo.png" alt="Mosaic" style={styles.logoIcon} />
-        <h1 style={styles.logo}>Mosaic</h1>
+        <img src="/logo-stacked.png" alt="Mosaic" style={styles.logoStacked} />
         <p style={styles.tagline}>Many pieces. One unforgettable trip.</p>
         {trip.coverPhotoURL && (
           <img src={trip.coverPhotoURL} alt="Trip cover" style={styles.cover} />
@@ -117,8 +116,7 @@ const styles = {
     maxWidth: '400px', width: '100%', textAlign: 'center',
     boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
   },
-  logo: { fontSize: '1.6rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', marginBottom: '4px' },
-  logoIcon: { width: '52px', height: '52px', objectFit: 'contain', marginBottom: '12px' },
+  logoStacked: { width: '140px', height: 'auto', objectFit: 'contain', marginBottom: '12px' },
   tagline: { fontSize: '0.75rem', color: '#b09070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '24px' },
   cover: { width: '100%', height: '160px', objectFit: 'cover', borderRadius: '10px', marginBottom: '16px' },
   tripTitle: { fontSize: '1.5rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' },

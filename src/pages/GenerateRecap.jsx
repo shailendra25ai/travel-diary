@@ -109,7 +109,7 @@ export default function GenerateRecap({ user }) {
     <div style={styles.container}>
       <div style={styles.header}>
         <button onClick={() => navigate(`/trips/${tripId}`)} style={styles.back}>← Back</button>
-        <img src="/logo.png" alt="Mosaic" style={styles.logoBig} />
+        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} />
         <div style={{ width: 60 }} />
       </div>
 
