@@ -34,10 +34,7 @@ export default function Home({ user }) {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div style={styles.logoRow}>
-          <img src="/logo.png" alt="Mosaic" style={styles.logoIcon} />
-          <h1 style={styles.logo}>Mosaic</h1>
-        </div>
+        <img src="/logo.png" alt="Mosaic" style={styles.logoBig} />
         <div style={styles.userRow}>
           <img src={user.photoURL} alt={user.displayName} style={styles.avatar} />
           <button onClick={handleSignOut} style={styles.signOutBtn}>Sign out</button>
@@ -90,8 +87,7 @@ const styles = {
     padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
   },
   logo: { fontSize: '1.3rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0 },
-  logoRow: { display: 'flex', alignItems: 'center', gap: '8px' },
-  logoIcon: { width: '28px', height: '28px', objectFit: 'contain' },
+  logoBig: { height: '44px', objectFit: 'contain' },
   userRow: { display: 'flex', alignItems: 'center', gap: '12px' },
   avatar: { width: '32px', height: '32px', borderRadius: '50%' },
   signOutBtn: { fontSize: '0.85rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer' },

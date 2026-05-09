@@ -103,10 +103,7 @@ export default function ShareRecap() {
 
       {/* Action bar */}
       <div style={s.actionBar}>
-        <div style={s.actionLogoRow}>
-          <img src="/logo.png" alt="Mosaic" style={s.actionLogoIcon} />
-          <p style={s.actionLogo}>Mosaic</p>
-        </div>
+        <img src="/logo.png" alt="Mosaic" style={s.actionLogoBig} />
         <div style={s.actionBtns}>
           <button onClick={handleCopyLink} style={s.actionBtn}>
             {copied ? '✓ Copied' : '🔗 Copy link'}
@@ -591,8 +588,7 @@ const s = {
     backdropFilter: 'blur(10px)', borderBottom: '1px solid #ebe5dc',
   },
   actionLogo: { fontSize: '1rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0 },
-  actionLogoRow: { display: 'flex', alignItems: 'center', gap: '8px' },
-  actionLogoIcon: { width: '24px', height: '24px', objectFit: 'contain' },
+  actionLogoBig: { height: '36px', objectFit: 'contain' },
   actionBtns: { display: 'flex', gap: '8px' },
   actionBtn: {
     padding: '8px 14px', backgroundColor: '#fff', border: '1.5px solid #ddd',
