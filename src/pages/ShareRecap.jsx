@@ -66,8 +66,8 @@ export default function ShareRecap() {
     }
     pdf.setDrawColor(220, 220, 220); pdf.line(margin, y, pageWidth - margin, y); y += 8
     addText(recap.closing, 11, 'italic', [80, 80, 80]); y += 16
-    addText('Made with Travel Diary', 8, 'normal', [200, 200, 200])
-    pdf.save(`${recapData.tripTitle} — Travel Diary Recap.pdf`)
+    addText('Made with Mosaic — Many pieces. One unforgettable trip.', 8, 'italic', [200, 200, 200])
+    pdf.save(`${recapData.tripTitle} — Mosaic.pdf`)
   }
 
   // Build day data with photos and AI captions
@@ -103,7 +103,10 @@ export default function ShareRecap() {
 
       {/* Action bar */}
       <div style={s.actionBar}>
-        <p style={s.actionLogo}>Travel Diary</p>
+        <div style={s.actionLogoRow}>
+          <img src="/logo.png" alt="Mosaic" style={s.actionLogoIcon} />
+          <p style={s.actionLogo}>Mosaic</p>
+        </div>
         <div style={s.actionBtns}>
           <button onClick={handleCopyLink} style={s.actionBtn}>
             {copied ? '✓ Copied' : '🔗 Copy link'}
@@ -569,8 +572,9 @@ function SingleEntryBox({ entry }) {
 function Branding() {
   return (
     <div style={s.brandingWrap}>
-      <p style={s.branding}>Made with Travel Diary</p>
-      <p style={s.brandingHint}>Capture your trips together and relive them forever</p>
+      <img src="/logo.png" alt="Mosaic" style={s.brandingLogo} />
+      <p style={s.branding}>Made with Mosaic</p>
+      <p style={s.brandingHint}>Many pieces. One unforgettable trip.</p>
     </div>
   )
 }
@@ -587,6 +591,8 @@ const s = {
     backdropFilter: 'blur(10px)', borderBottom: '1px solid #ebe5dc',
   },
   actionLogo: { fontSize: '1rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0 },
+  actionLogoRow: { display: 'flex', alignItems: 'center', gap: '8px' },
+  actionLogoIcon: { width: '24px', height: '24px', objectFit: 'contain' },
   actionBtns: { display: 'flex', gap: '8px' },
   actionBtn: {
     padding: '8px 14px', backgroundColor: '#fff', border: '1.5px solid #ddd',
@@ -720,7 +726,8 @@ const s = {
   closing: { fontSize: '1.1rem', color: '#444', fontStyle: 'italic', lineHeight: '1.85', fontFamily: 'Georgia, serif', maxWidth: '560px', margin: '0 auto' },
 
   /* Branding */
-  brandingWrap: { textAlign: 'center', padding: '28px 16px 48px', backgroundColor: '#fff', borderTop: '1px solid #ebe5dc' },
+  brandingWrap: { textAlign: 'center', padding: '32px 16px 48px', backgroundColor: '#fff', borderTop: '1px solid #ebe5dc' },
+  brandingLogo: { width: '36px', height: '36px', objectFit: 'contain', marginBottom: '10px', opacity: 0.8 },
   branding: { fontSize: '0.95rem', fontWeight: '700', color: '#bbb', marginBottom: '4px', fontFamily: 'Georgia, serif' },
   brandingHint: { fontSize: '0.8rem', color: '#ccc' },
 

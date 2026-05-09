@@ -13,8 +13,10 @@ export default function Login() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>Travel Diary</h1>
-        <p style={styles.subtitle}>Capture trips together. Relive them forever.</p>
+        <img src="/logo.png" alt="Mosaic" style={styles.logo} />
+        <h1 style={styles.title}>Mosaic</h1>
+        <p style={styles.tagline}>Many pieces. One unforgettable trip.</p>
+        <p style={styles.subtitle}>Capture trips together. Share them beautifully. Relive them forever.</p>
         <button onClick={handleGoogleSignIn} style={styles.button}>
           <img
             src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
@@ -39,25 +41,40 @@ const styles = {
   },
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: '16px',
-    padding: '48px 40px',
+    borderRadius: '20px',
+    padding: '48px 36px',
     textAlign: 'center',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-    maxWidth: '380px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
+    maxWidth: '400px',
     width: '100%',
   },
+  logo: {
+    width: '72px',
+    height: '72px',
+    marginBottom: '20px',
+    objectFit: 'contain',
+  },
   title: {
-    fontSize: '2rem',
+    fontSize: '2.4rem',
     fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: '8px',
     fontFamily: 'Georgia, serif',
+    letterSpacing: '-0.02em',
+  },
+  tagline: {
+    fontSize: '0.85rem',
+    color: '#b09070',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.12em',
+    marginBottom: '24px',
   },
   subtitle: {
     fontSize: '1rem',
     color: '#666',
     marginBottom: '36px',
-    lineHeight: '1.5',
+    lineHeight: '1.6',
   },
   button: {
     display: 'flex',
@@ -67,7 +84,7 @@ const styles = {
     padding: '14px 20px',
     backgroundColor: '#ffffff',
     border: '1.5px solid #ddd',
-    borderRadius: '8px',
+    borderRadius: '10px',
     fontSize: '1rem',
     fontWeight: '500',
     color: '#333',
