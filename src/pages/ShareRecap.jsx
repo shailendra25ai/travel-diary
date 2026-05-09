@@ -133,7 +133,10 @@ export default function ShareRecap() {
         {/* Brand strip with tagline at top */}
         <div style={s.brandStrip}>
           <img src="/logo-icon.png" alt="" style={s.brandStripIcon} />
-          <p style={s.brandStripText}>Mosaic · <span style={s.brandStripTag}>Many pieces. One unforgettable trip.</span></p>
+          <div style={s.brandStripCol}>
+            <p style={s.brandStripName}>Mosaic</p>
+            <p style={s.brandStripTagline}>Many pieces. One unforgettable trip.</p>
+          </div>
         </div>
 
         {template === 'magazine' && <MagazineTemplate {...sharedProps} />}
@@ -624,12 +627,13 @@ const s = {
 
   /* Brand strip — appears at top of recap content (above hero, below action bar) */
   brandStrip: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-    padding: '10px 16px', backgroundColor: '#fff',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px',
+    padding: '24px 16px', backgroundColor: '#fff', borderBottom: '1px solid #ebe5dc',
   },
-  brandStripIcon: { width: '20px', height: '20px', objectFit: 'contain' },
-  brandStripText: { fontSize: '0.78rem', color: '#999', fontWeight: '600', textAlign: 'center', margin: 0 },
-  brandStripTag: { fontStyle: 'italic', color: '#b09070', fontWeight: '500' },
+  brandStripIcon: { width: '52px', height: '52px', objectFit: 'contain' },
+  brandStripCol: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
+  brandStripName: { fontSize: '1.5rem', color: '#1a1a1a', fontWeight: '700', margin: 0, fontFamily: 'Georgia, serif', lineHeight: 1.1 },
+  brandStripTagline: { fontSize: '0.85rem', color: '#b09070', fontWeight: '600', fontStyle: 'italic', margin: 0, marginTop: '4px', letterSpacing: '0.02em' },
 
   /* MAGAZINE template */
   heroMag: { width: '100%', height: '500px', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' },
@@ -754,10 +758,10 @@ const s = {
   closing: { fontSize: '1.1rem', color: '#444', fontStyle: 'italic', lineHeight: '1.85', fontFamily: 'Georgia, serif', maxWidth: '560px', margin: '0 auto' },
 
   /* Branding */
-  brandingWrap: { textAlign: 'center', padding: '32px 16px 48px', backgroundColor: '#fff', borderTop: '1px solid #ebe5dc' },
-  brandingLogo: { width: '36px', height: '36px', objectFit: 'contain', marginBottom: '10px', opacity: 0.8 },
-  branding: { fontSize: '0.95rem', fontWeight: '700', color: '#bbb', marginBottom: '4px', fontFamily: 'Georgia, serif' },
-  brandingHint: { fontSize: '0.8rem', color: '#ccc' },
+  brandingWrap: { textAlign: 'center', padding: '48px 16px 56px', backgroundColor: '#fff', borderTop: '1px solid #ebe5dc' },
+  brandingLogo: { width: '64px', height: '64px', objectFit: 'contain', marginBottom: '16px' },
+  branding: { fontSize: '1.4rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px', fontFamily: 'Georgia, serif' },
+  brandingHint: { fontSize: '0.95rem', color: '#b09070', fontStyle: 'italic', fontWeight: '500' },
 
   /* SPLIT POV */
   heroSplit: { width: '100%', height: '480px', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' },
