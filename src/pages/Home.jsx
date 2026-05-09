@@ -51,6 +51,7 @@ export default function Home({ user }) {
 
         {!loading && trips.length === 0 && (
           <div style={styles.empty}>
+            <p style={styles.emptyTagline}>Many pieces. One unforgettable trip.</p>
             <p style={styles.emptyText}>No trips yet.</p>
             <p style={styles.hint}>Create your first trip and invite your travel group.</p>
           </div>
@@ -100,6 +101,7 @@ const styles = {
     fontWeight: '500', cursor: 'pointer',
   },
   empty: { textAlign: 'center', padding: '48px 0' },
+  emptyTagline: { fontSize: '0.78rem', color: '#b09070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '24px', fontStyle: 'italic' },
   emptyText: { fontSize: '1rem', color: '#555', marginBottom: '8px' },
   hint: { fontSize: '0.9rem', color: '#aaa' },
   tripGrid: { display: 'flex', flexDirection: 'column', gap: '16px' },

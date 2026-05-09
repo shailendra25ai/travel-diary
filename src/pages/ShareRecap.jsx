@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { jsPDF } from 'jspdf'
+import html2canvas from 'html2canvas'
 
 function formatDate(d) {
   if (!d) return ''
@@ -15,6 +16,7 @@ export default function ShareRecap() {
   const [recapData, setRecapData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [generatingPDF, setGeneratingPDF] = useState(false)
 
   useEffect(() => {
     const fetchRecap = async () => {
@@ -39,35 +41,48 @@ export default function ShareRecap() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleDownloadPDF = () => {
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-    const margin = 20, pageWidth = 210
-    const contentWidth = pageWidth - margin * 2
-    let y = margin
-    const addText = (text, fontSize, fontStyle, color, lhMult = 1.4) => {
-      pdf.setFontSize(fontSize)
-      pdf.setFont('helvetica', fontStyle)
-      pdf.setTextColor(...color)
-      const lines = pdf.splitTextToSize(text, contentWidth)
-      const lh = fontSize * 0.352778 * lhMult
-      if (y + lines.length * lh > 280) { pdf.addPage(); y = margin }
-      pdf.text(lines, margin, y)
-      y += lines.length * lh + 2
-    }
-    addText(recap.title, 22, 'bold', [26, 26, 26]); y += 2
-    addText(recapData.tripTitle, 12, 'normal', [150, 150, 150]); y += 8
-    pdf.setDrawColor(220, 220, 220); pdf.line(margin, y, pageWidth - margin, y); y += 8
-    addText(recap.summary, 11, 'normal', [60, 60, 60]); y += 10
-    if (recap.days?.length > 0) {
-      recap.days.forEach(day => {
-        addText(formatDate(day.date), 9, 'bold', [180, 150, 120]); y += 1
-        addText(day.caption, 11, 'normal', [60, 60, 60]); y += 8
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('recap-content')
+    if (!element) return
+
+    setGeneratingPDF(true)
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#faf7f2',
+        logging: false,
+        imageTimeout: 15000,
       })
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.92)
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = pdfWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+      let heightLeft = imgHeight
+      let position = 0
+
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pdfHeight
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pdfHeight
+      }
+
+      pdf.save(`${recapData.tripTitle} — Mosaic.pdf`)
+    } catch (err) {
+      console.error('PDF generation failed:', err)
+      alert('Could not generate PDF. Please try again.')
+    } finally {
+      setGeneratingPDF(false)
     }
-    pdf.setDrawColor(220, 220, 220); pdf.line(margin, y, pageWidth - margin, y); y += 8
-    addText(recap.closing, 11, 'italic', [80, 80, 80]); y += 16
-    addText('Made with Mosaic — Many pieces. One unforgettable trip.', 8, 'italic', [200, 200, 200])
-    pdf.save(`${recapData.tripTitle} — Mosaic.pdf`)
   }
 
   // Build day data with photos and AI captions
@@ -108,19 +123,27 @@ export default function ShareRecap() {
           <button onClick={handleCopyLink} style={s.actionBtn}>
             {copied ? '✓ Copied' : '🔗 Copy link'}
           </button>
-          <button onClick={handleDownloadPDF} style={s.actionBtnPrimary}>
-            ⬇ Download PDF
+          <button onClick={handleDownloadPDF} style={s.actionBtnPrimary} disabled={generatingPDF}>
+            {generatingPDF ? '⏳ Generating...' : '⬇ Download PDF'}
           </button>
         </div>
       </div>
 
-      {template === 'magazine' && <MagazineTemplate {...sharedProps} />}
-      {template === 'storybook' && <StorybookTemplate {...sharedProps} />}
-      {template === 'polaroid' && <PolaroidTemplate {...sharedProps} />}
-      {template === 'splitpov' && <SplitPOVTemplate {...sharedProps} />}
-      {template === 'stories' && <StoriesTemplate {...sharedProps} />}
+      <div id="recap-content">
+        {/* Brand strip with tagline at top */}
+        <div style={s.brandStrip}>
+          <img src="/logo-icon.png" alt="" style={s.brandStripIcon} />
+          <p style={s.brandStripText}>Mosaic · <span style={s.brandStripTag}>Many pieces. One unforgettable trip.</span></p>
+        </div>
 
-      <Branding />
+        {template === 'magazine' && <MagazineTemplate {...sharedProps} />}
+        {template === 'storybook' && <StorybookTemplate {...sharedProps} />}
+        {template === 'polaroid' && <PolaroidTemplate {...sharedProps} />}
+        {template === 'splitpov' && <SplitPOVTemplate {...sharedProps} />}
+        {template === 'stories' && <StoriesTemplate {...sharedProps} />}
+
+        <Branding />
+      </div>
     </div>
   )
 }
@@ -598,6 +621,15 @@ const s = {
     padding: '8px 14px', backgroundColor: '#1a1a1a', border: 'none',
     borderRadius: '20px', fontSize: '0.85rem', color: '#fff', cursor: 'pointer', fontWeight: '600',
   },
+
+  /* Brand strip — appears at top of recap content (above hero, below action bar) */
+  brandStrip: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+    padding: '10px 16px', backgroundColor: '#fff',
+  },
+  brandStripIcon: { width: '20px', height: '20px', objectFit: 'contain' },
+  brandStripText: { fontSize: '0.78rem', color: '#999', fontWeight: '600', textAlign: 'center', margin: 0 },
+  brandStripTag: { fontStyle: 'italic', color: '#b09070', fontWeight: '500' },
 
   /* MAGAZINE template */
   heroMag: { width: '100%', height: '500px', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' },
