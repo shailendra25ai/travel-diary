@@ -12,31 +12,36 @@ const TEMPLATES = [
     id: 'magazine',
     name: 'Magazine',
     description: 'Editorial layout. Big photos, polished captions, clean typography.',
-    accent: '#1a1a1a',
+    icon: '📰',
+    accent: '#5a4830',
   },
   {
     id: 'storybook',
     name: 'Storybook',
     description: 'Photos and stories side-by-side, alternating like a storybook.',
+    icon: '📖',
     accent: '#7a5a3a',
   },
   {
     id: 'polaroid',
     name: 'Polaroid Scrapbook',
     description: 'Casual and warm — photos as polaroids with handwritten-style notes.',
+    icon: '📸',
     accent: '#c89060',
   },
   {
     id: 'splitpov',
     name: 'Split POV ⭐',
     description: 'Same day, two views. Side-by-side comparison — perfect for multi-perspective trips.',
+    icon: '👥',
     accent: '#2d4a8a',
   },
   {
     id: 'stories',
     name: 'Stories',
     description: 'Vertical Instagram Story-style cards. Made to screenshot and share to social.',
-    accent: '#e84a8a',
+    icon: '📱',
+    accent: '#a83a6a',
   },
 ]
 
@@ -117,40 +122,63 @@ export default function GenerateRecap({ user }) {
 
         {step === 'choose' && (
           <>
-            <h2 style={styles.heading}>Generate trip recap</h2>
+            <p style={styles.eyebrow}>✨ AI Recap</p>
+            <h2 style={styles.heading}>Let's craft your story</h2>
             <p style={styles.subheading}>{trip.title}</p>
 
-            <p style={styles.sectionLabel}>1. Whose story?</p>
+            <p style={styles.sectionLabel}>① &nbsp;Whose story?</p>
             <div style={styles.modeRow}>
               <div
-                style={{ ...styles.modeCard, ...(mode === 'single' ? styles.cardActive : {}) }}
+                style={{
+                  ...styles.modeCard,
+                  ...(mode === 'single'
+                    ? { ...styles.cardActive, borderColor: '#c89060', boxShadow: '0 4px 14px rgba(200,144,96,0.18)' }
+                    : {}),
+                }}
                 onClick={() => setMode('single')}
               >
+                <div style={{ ...styles.modeIcon, backgroundColor: '#fbeede', color: '#c89060' }}>🚶</div>
                 <p style={styles.modeTitle}>Just me</p>
                 <p style={styles.modeDesc}>Your trip from your point of view.</p>
               </div>
               <div
-                style={{ ...styles.modeCard, ...(mode === 'multi' ? styles.cardActive : {}) }}
+                style={{
+                  ...styles.modeCard,
+                  ...(mode === 'multi'
+                    ? { ...styles.cardActive, borderColor: '#2d4a8a', boxShadow: '0 4px 14px rgba(45,74,138,0.18)' }
+                    : {}),
+                }}
                 onClick={() => setMode('multi')}
               >
+                <div style={{ ...styles.modeIcon, backgroundColor: '#e3eaf5', color: '#2d4a8a' }}>👥</div>
                 <p style={styles.modeTitle}>Everyone</p>
                 <p style={styles.modeDesc}>Multi-perspective — woven from every member's eyes.</p>
               </div>
             </div>
 
-            <p style={styles.sectionLabel}>2. Pick a style</p>
+            <p style={styles.sectionLabel}>② &nbsp;Pick a style</p>
             <div style={styles.templateList}>
               {TEMPLATES.map(t => (
                 <div
                   key={t.id}
-                  style={{ ...styles.templateCard, ...(template === t.id ? styles.cardActive : {}) }}
+                  style={{
+                    ...styles.templateCard,
+                    ...(template === t.id
+                      ? { ...styles.cardActive, borderColor: t.accent, boxShadow: `0 4px 14px ${t.accent}30` }
+                      : {}),
+                  }}
                   onClick={() => setTemplate(t.id)}
                 >
-                  <TemplatePreview templateId={t.id} accent={t.accent} />
+                  <div style={{ ...styles.templateIconBox, backgroundColor: `${t.accent}18`, color: t.accent }}>
+                    <span style={styles.templateIcon}>{t.icon}</span>
+                  </div>
                   <div style={styles.templateInfo}>
-                    <p style={styles.templateName}>{t.name}</p>
+                    <p style={{ ...styles.templateName, color: template === t.id ? t.accent : '#1a1a1a' }}>{t.name}</p>
                     <p style={styles.templateDesc}>{t.description}</p>
                   </div>
+                  {template === t.id && (
+                    <div style={{ ...styles.checkDot, backgroundColor: t.accent }}>✓</div>
+                  )}
                 </div>
               ))}
             </div>
@@ -158,7 +186,7 @@ export default function GenerateRecap({ user }) {
             {error && <p style={styles.error}>{error}</p>}
 
             <button onClick={handleGenerate} style={styles.generateBtn}>
-              Generate recap with AI ✨
+              ✨ &nbsp; Generate recap with AI
             </button>
           </>
         )}
@@ -262,41 +290,69 @@ const styles = {
   logoBig: { height: '44px', objectFit: 'contain', cursor: 'pointer' },
   back: { background: 'none', border: 'none', fontSize: '0.95rem', color: '#555', cursor: 'pointer' },
   body: { maxWidth: '520px', margin: '0 auto', padding: '32px 24px 64px' },
-  heading: { fontSize: '1.5rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' },
-  subheading: { fontSize: '0.95rem', color: '#888', marginBottom: '32px' },
-  sectionLabel: { fontSize: '0.78rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px', marginTop: '24px' },
+  eyebrow: {
+    display: 'inline-block', fontSize: '0.72rem', fontWeight: '700',
+    color: '#c89060', textTransform: 'uppercase', letterSpacing: '0.15em',
+    backgroundColor: '#fbeede', padding: '5px 12px', borderRadius: '20px', marginBottom: '14px',
+  },
+  heading: {
+    fontSize: '1.85rem', fontWeight: '700', color: '#1a1a1a',
+    marginBottom: '6px', fontFamily: 'Georgia, serif', lineHeight: '1.2',
+  },
+  subheading: { fontSize: '0.95rem', color: '#7a8a5a', fontWeight: '600', marginBottom: '32px', fontStyle: 'italic' },
+  sectionLabel: {
+    fontSize: '0.85rem', fontWeight: '700', color: '#b09070',
+    textTransform: 'uppercase', letterSpacing: '0.1em',
+    marginBottom: '14px', marginTop: '28px',
+  },
 
   modeRow: { display: 'flex', gap: '12px', marginBottom: '8px' },
   modeCard: {
-    flex: 1, backgroundColor: '#fff', borderRadius: '12px', padding: '16px',
-    border: '2px solid #eee', cursor: 'pointer',
+    flex: 1, backgroundColor: '#fff', borderRadius: '14px', padding: '18px 14px',
+    border: '2px solid #ebe5dc', cursor: 'pointer', textAlign: 'center',
+    transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s',
   },
-  modeTitle: { fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' },
-  modeDesc: { fontSize: '0.85rem', color: '#666', lineHeight: '1.5' },
+  modeIcon: {
+    width: '52px', height: '52px', borderRadius: '50%',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '1.6rem', margin: '0 auto 12px',
+  },
+  modeTitle: { fontWeight: '700', color: '#1a1a1a', marginBottom: '4px', fontFamily: 'Georgia, serif', fontSize: '1.05rem' },
+  modeDesc: { fontSize: '0.82rem', color: '#777', lineHeight: '1.5' },
 
   templateList: { display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' },
   templateCard: {
-    display: 'flex', gap: '14px', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: '12px', padding: '14px',
-    border: '2px solid #eee', cursor: 'pointer',
+    display: 'flex', gap: '14px', alignItems: 'center', position: 'relative',
+    backgroundColor: '#fff', borderRadius: '14px', padding: '16px',
+    border: '2px solid #ebe5dc', cursor: 'pointer',
+    transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s',
   },
+  templateIconBox: {
+    width: '52px', height: '52px', borderRadius: '12px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  templateIcon: { fontSize: '1.6rem' },
   templateInfo: { flex: 1 },
-  templateName: { fontWeight: '700', color: '#1a1a1a', marginBottom: '2px' },
-  templateDesc: { fontSize: '0.85rem', color: '#666', lineHeight: '1.5' },
-
-  previewBox: {
-    width: '90px', height: '64px', backgroundColor: '#faf7f2',
-    borderRadius: '6px', padding: '6px', flexShrink: 0,
-    border: '1px solid #ebe5dc',
+  templateName: { fontWeight: '700', marginBottom: '2px', fontFamily: 'Georgia, serif', fontSize: '1.05rem' },
+  templateDesc: { fontSize: '0.85rem', color: '#777', lineHeight: '1.5' },
+  checkDot: {
+    width: '24px', height: '24px', borderRadius: '50%',
+    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '0.85rem', fontWeight: '700', flexShrink: 0,
   },
+
+  previewBox: { width: '90px', height: '64px', backgroundColor: '#faf7f2', borderRadius: '6px', padding: '6px', flexShrink: 0, border: '1px solid #ebe5dc' },
   previewBlock: { backgroundColor: '#ccc', borderRadius: '2px', margin: '3px 0' },
 
-  cardActive: { border: '2px solid #1a1a1a', backgroundColor: '#fcfaf6' },
+  cardActive: { backgroundColor: '#fdfaf5' },
 
   generateBtn: {
-    width: '100%', backgroundColor: '#1a1a1a', color: '#fff',
-    border: 'none', borderRadius: '10px', padding: '16px',
-    fontSize: '1rem', fontWeight: '700', cursor: 'pointer', marginTop: '8px',
+    width: '100%',
+    background: 'linear-gradient(135deg, #c89060 0%, #b09070 50%, #2d4a8a 100%)',
+    color: '#fff', border: 'none', borderRadius: '14px', padding: '18px',
+    fontSize: '1.05rem', fontWeight: '700', cursor: 'pointer', marginTop: '12px',
+    boxShadow: '0 6px 20px rgba(200,144,96,0.3)', letterSpacing: '0.02em',
   },
   error: { color: '#e53e3e', fontSize: '0.9rem', marginBottom: '12px' },
 
