@@ -83,7 +83,10 @@ export default function Trip({ user }) {
       </div>
 
       {trip.coverPhotoURL && (
-        <img src={trip.coverPhotoURL} alt="Cover" style={styles.cover} />
+        <div style={styles.coverWrap}>
+          <div style={{ ...styles.coverBlur, backgroundImage: `url(${trip.coverPhotoURL})` }} />
+          <img src={trip.coverPhotoURL} alt="Cover" style={styles.coverImg} />
+        </div>
       )}
 
       <div style={styles.body}>
@@ -280,6 +283,20 @@ const styles = {
   back: { background: 'none', border: 'none', fontSize: '0.95rem', color: '#555', cursor: 'pointer' },
   avatar: { width: '32px', height: '32px', borderRadius: '50%' },
   cover: { width: '100%', height: '220px', objectFit: 'cover' },
+  coverWrap: {
+    position: 'relative', width: '100%', height: '280px',
+    overflow: 'hidden', backgroundColor: '#1a1a1a',
+  },
+  coverBlur: {
+    position: 'absolute', inset: '-10px',
+    backgroundSize: 'cover', backgroundPosition: 'center',
+    filter: 'blur(28px) brightness(0.7) saturate(1.1)',
+    transform: 'scale(1.1)',
+  },
+  coverImg: {
+    position: 'absolute', inset: 0,
+    width: '100%', height: '100%', objectFit: 'contain',
+  },
   body: { maxWidth: '600px', margin: '0 auto', padding: '24px' },
   titleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '6px' },
   tripTitle: { fontSize: '1.8rem', fontWeight: '700', color: '#1a1a1a', flex: 1 },

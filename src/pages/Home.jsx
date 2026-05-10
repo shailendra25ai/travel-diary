@@ -171,18 +171,16 @@ export default function Home({ user }) {
           <section style={s.section}>
             <p style={s.sectionLabel}>✨ On this day</p>
             {memories.map(({ trip, yearsAgo }) => (
-              <div
+              <SmartPhotoCard
                 key={trip.id}
-                style={{ ...s.memoryCard, backgroundImage: trip.coverPhotoURL ? `url(${trip.coverPhotoURL})` : '' }}
+                photoURL={trip.coverPhotoURL}
                 onClick={() => navigate(`/trips/${trip.id}`)}
               >
-                <div style={s.memoryOverlay}>
-                  <p style={s.memoryYears}>{yearsAgo} {yearsAgo === 1 ? 'year' : 'years'} ago</p>
-                  <h3 style={s.memoryTitle}>{trip.title}</h3>
-                  {trip.location?.name && <p style={s.memoryLoc}>📍 {trip.location.name}</p>}
-                  <p style={s.memoryCta}>Relive this trip →</p>
-                </div>
-              </div>
+                <p style={s.memoryYears}>{yearsAgo} {yearsAgo === 1 ? 'year' : 'years'} ago</p>
+                <h3 style={s.memoryTitle}>{trip.title}</h3>
+                {trip.location?.name && <p style={s.memoryLoc}>📍 {trip.location.name}</p>}
+                <p style={s.memoryCta}>Relive this trip →</p>
+              </SmartPhotoCard>
             ))}
           </section>
         )}
@@ -191,16 +189,14 @@ export default function Home({ user }) {
         {memories.length === 0 && featuredTrip && (
           <section style={s.section}>
             <p style={s.sectionLabel}>★ Featured</p>
-            <div
-              style={{ ...s.memoryCard, backgroundImage: `url(${featuredTrip.coverPhotoURL})` }}
+            <SmartPhotoCard
+              photoURL={featuredTrip.coverPhotoURL}
               onClick={() => navigate(`/trips/${featuredTrip.id}`)}
             >
-              <div style={s.memoryOverlay}>
-                <h3 style={s.memoryTitle}>{featuredTrip.title}</h3>
-                {featuredTrip.location?.name && <p style={s.memoryLoc}>📍 {featuredTrip.location.name}</p>}
-                <p style={s.memoryCta}>Open trip →</p>
-              </div>
-            </div>
+              <h3 style={s.memoryTitle}>{featuredTrip.title}</h3>
+              {featuredTrip.location?.name && <p style={s.memoryLoc}>📍 {featuredTrip.location.name}</p>}
+              <p style={s.memoryCta}>Open trip →</p>
+            </SmartPhotoCard>
           </section>
         )}
 
@@ -249,6 +245,22 @@ export default function Home({ user }) {
 
       <div style={{ height: '80px' }} /> {/* spacer for bottom nav */}
       <BottomNav />
+    </div>
+  )
+}
+
+function SmartPhotoCard({ photoURL, onClick, children }) {
+  return (
+    <div style={s.smartCard} onClick={onClick}>
+      {photoURL ? (
+        <>
+          <div style={{ ...s.smartCardBlurBg, backgroundImage: `url(${photoURL})` }} />
+          <img src={photoURL} alt="" style={s.smartCardImg} />
+        </>
+      ) : (
+        <div style={s.smartCardFallback} />
+      )}
+      <div style={s.smartCardOverlay}>{children}</div>
     </div>
   )
 }
@@ -335,16 +347,29 @@ const s = {
   section: { marginBottom: '24px' },
   sectionLabel: { fontSize: '0.72rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '12px' },
 
-  /* Memory card */
-  memoryCard: {
-    height: '220px', borderRadius: '16px', backgroundSize: 'cover',
-    backgroundPosition: 'center', backgroundColor: '#1a1a1a',
-    cursor: 'pointer', overflow: 'hidden', position: 'relative',
+  /* Smart photo card (handles any aspect ratio) */
+  smartCard: {
+    position: 'relative', height: '280px', borderRadius: '16px',
+    overflow: 'hidden', cursor: 'pointer', backgroundColor: '#1a1a1a',
     boxShadow: '0 6px 20px rgba(0,0,0,0.12)', marginBottom: '12px',
   },
-  memoryOverlay: {
+  smartCardBlurBg: {
+    position: 'absolute', inset: '-10px',
+    backgroundSize: 'cover', backgroundPosition: 'center',
+    filter: 'blur(28px) brightness(0.7) saturate(1.1)',
+    transform: 'scale(1.1)',
+  },
+  smartCardImg: {
     position: 'absolute', inset: 0,
-    background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.85) 100%)',
+    width: '100%', height: '100%', objectFit: 'contain',
+  },
+  smartCardFallback: {
+    position: 'absolute', inset: 0,
+    background: 'linear-gradient(135deg, #c89060 0%, #2d4a8a 100%)',
+  },
+  smartCardOverlay: {
+    position: 'absolute', inset: 0,
+    background: 'linear-gradient(to bottom, transparent 0%, transparent 50%, rgba(0,0,0,0.85) 100%)',
     padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
   },
   memoryYears: { fontSize: '0.78rem', color: '#c89060', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '6px' },

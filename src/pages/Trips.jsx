@@ -93,7 +93,10 @@ export default function Trips({ user }) {
             {trips.map(trip => (
               <div key={trip.id} style={styles.tripCard} onClick={() => navigate(`/trips/${trip.id}`)}>
                 {trip.coverPhotoURL ? (
-                  <img src={trip.coverPhotoURL} alt={trip.title} style={styles.tripCover} />
+                  <div style={styles.tripCoverWrap}>
+                    <div style={{ ...styles.tripCoverBlur, backgroundImage: `url(${trip.coverPhotoURL})` }} />
+                    <img src={trip.coverPhotoURL} alt={trip.title} style={styles.tripCoverImg} />
+                  </div>
                 ) : (
                   <div style={styles.tripCoverPlaceholder} />
                 )}
@@ -166,6 +169,14 @@ const styles = {
     boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
   },
   tripCover: { width: '100%', height: '160px', objectFit: 'cover' },
+  tripCoverWrap: { position: 'relative', width: '100%', height: '200px', overflow: 'hidden', backgroundColor: '#1a1a1a' },
+  tripCoverBlur: {
+    position: 'absolute', inset: '-10px',
+    backgroundSize: 'cover', backgroundPosition: 'center',
+    filter: 'blur(28px) brightness(0.75) saturate(1.1)',
+    transform: 'scale(1.1)',
+  },
+  tripCoverImg: { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' },
   tripCoverPlaceholder: { width: '100%', height: '100px', backgroundColor: '#e8e4df' },
   tripInfo: { padding: '16px' },
   tripTopRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px', gap: '8px' },
