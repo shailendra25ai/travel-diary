@@ -5,6 +5,29 @@ import { collection, query, where, onSnapshot, orderBy, collectionGroup, limit }
 import { auth, db } from '../firebase'
 import BottomNav from '../components/BottomNav'
 
+const HERO_PHOTOS = [
+  // Mountain lake, golden hour
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80',
+  // Hot air balloons over Cappadocia
+  'https://images.unsplash.com/photo-1517760444937-f6397edcbbcd?w=1600&q=80',
+  // Tropical beach with palm trees
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80',
+  // Mountain valley with sunlight
+  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=80',
+  // Forest road in autumn
+  'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1600&q=80',
+  // Desert dunes
+  'https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=1600&q=80',
+  // Coastal cliffs at sunset
+  'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=1600&q=80',
+  // Rice terraces
+  'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1600&q=80',
+  // Northern lights
+  'https://images.unsplash.com/photo-1483347756197-71ef80e95f73?w=1600&q=80',
+  // City skyline at golden hour
+  'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1600&q=80',
+]
+
 const TRAVEL_QUOTES = [
   { quote: "Travel is the only thing you buy that makes you richer.", author: "Anonymous" },
   { quote: "We travel not to escape life, but for life not to escape us.", author: "Anonymous" },
@@ -46,6 +69,7 @@ export default function Home({ user }) {
   const navigate = useNavigate()
   const [trips, setTrips] = useState([])
   const [loading, setLoading] = useState(true)
+  const [heroPhoto] = useState(() => HERO_PHOTOS[Math.floor(Math.random() * HERO_PHOTOS.length)])
 
   useEffect(() => {
     const q = query(
@@ -99,7 +123,7 @@ export default function Home({ user }) {
     <div style={s.container}>
       {/* HERO */}
       <div style={s.hero}>
-        <div style={s.heroBg} />
+        <div style={{ ...s.heroBg, backgroundImage: `url(${heroPhoto})` }} />
         <div style={s.heroOverlay}>
           <div style={s.heroTop}>
             <div style={s.heroLogoRow} onClick={() => navigate('/home')}>
@@ -248,7 +272,6 @@ const s = {
   },
   heroBg: {
     position: 'absolute', inset: 0,
-    backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80)',
     backgroundSize: 'cover', backgroundPosition: 'center',
     animation: 'kenBurns 30s ease-in-out infinite alternate',
   },
