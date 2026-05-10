@@ -47,13 +47,24 @@ export default function ShareRecap() {
 
     setGeneratingPDF(true)
     try {
+      // Wait for all images inside the element to fully load
+      const images = Array.from(element.querySelectorAll('img'))
+      await Promise.all(images.map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve()
+        return new Promise(resolve => {
+          img.onload = resolve
+          img.onerror = resolve
+          setTimeout(resolve, 5000)
+        })
+      }))
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#faf7f2',
         logging: false,
-        imageTimeout: 15000,
+        imageTimeout: 20000,
       })
 
       const imgData = canvas.toDataURL('image/jpeg', 0.92)
@@ -183,7 +194,7 @@ function MagazineTemplate({ recap, recapData, days, isMulti, coverPhoto, memberL
         {days.map((day, i) => (
           <div key={day.date} style={s.dayMag}>
             <div style={s.dayMagHeader}>
-              <p style={s.dayMagLabel}>{day.dayLabel}</p>
+              <span style={s.dayPill}>✦ {day.dayLabel}</span>
               <p style={s.dayMagDate}>{formatDate(day.date)}</p>
             </div>
             {day.aiCaption && <p style={s.dayMagCaption}>{day.aiCaption}</p>}
@@ -233,7 +244,7 @@ function StorybookTemplate({ recap, recapData, days, isMulti, coverPhoto, member
           return (
             <div key={day.date} style={s.dayStory}>
               <div style={s.dayStoryHeader}>
-                <p style={s.dayStoryLabel}>{day.dayLabel}</p>
+                <span style={s.dayPill}>✦ {day.dayLabel}</span>
                 <p style={s.dayStoryDate}>{formatDate(day.date)}</p>
               </div>
               <div style={s.storyRow}>
@@ -309,7 +320,16 @@ function PolaroidTemplate({ recap, recapData, days, isMulti, coverPhoto, memberL
                 const rot = rotations[j % rotations.length]
                 return (
                   <div key={j} style={{ ...s.polaroid, transform: `rotate(${rot}deg)` }}>
-                    <img src={url} alt="" style={s.polaroidImg} />
+                    <div style={s.polaroidImgWrap}>
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center',
+                        filter: 'blur(20px) brightness(0.85)', transform: 'scale(1.1)',
+                      }} />
+                      <img src={url} alt="" style={{
+                        position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain',
+                      }} />
+                    </div>
                   </div>
                 )
               })}
@@ -388,7 +408,7 @@ function SplitPOVTemplate({ recap, recapData, days, isMulti, coverPhoto, memberL
           return (
             <div key={day.date} style={s.splitDay}>
               <div style={s.splitDayHeader}>
-                <p style={s.splitDayLabel}>{day.dayLabel}</p>
+                <span style={s.dayPill}>✦ {day.dayLabel}</span>
                 <p style={s.splitDayTitle}>Same day. {isMulti ? 'Two views.' : 'Your view.'}</p>
                 <p style={s.splitDayDate}>{formatDate(day.date)}</p>
               </div>
@@ -431,7 +451,7 @@ function SplitSide({ entry, accent }) {
       <div style={{ ...s.splitSideHeader, borderBottomColor: accentColor }}>
         <img src={entry.userPhoto} alt="" style={s.splitSideAv} />
         <div>
-          <p style={s.splitSideLabel}>Through</p>
+          <span style={{ ...s.splitSideTag, color: accentColor, backgroundColor: `${accentColor}18` }}>Through</span>
           <p style={s.splitSideName}>{entry.userName.split(' ')[0]}'s eyes</p>
         </div>
       </div>
@@ -439,7 +459,7 @@ function SplitSide({ entry, accent }) {
       {/* Stacked photos */}
       <div style={s.splitPhotosStack}>
         {photos.slice(0, 4).map((url, i) => (
-          <img key={i} src={url} alt="" style={s.splitPhoto} />
+          <SmartPhoto key={i} src={url} height={260} radius={10} />
         ))}
       </div>
 
@@ -534,30 +554,60 @@ function StoryCard({ day, index, totalDays, isMulti }) {
 }
 
 /* ========= SHARED COMPONENTS ========= */
+
+/* Smart photo: blurred background + contained image (works for any aspect ratio) */
+function SmartPhoto({ src, height = 280, radius = 10 }) {
+  return (
+    <div style={{
+      position: 'relative', width: '100%', height: `${height}px`,
+      borderRadius: `${radius}px`, overflow: 'hidden', backgroundColor: '#1a1a1a',
+    }}>
+      <div style={{
+        position: 'absolute', inset: '-10px',
+        backgroundImage: `url(${src})`, backgroundSize: 'cover', backgroundPosition: 'center',
+        filter: 'blur(28px) brightness(0.7) saturate(1.1)', transform: 'scale(1.1)',
+      }} />
+      <img src={src} alt="" style={{
+        position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain',
+      }} />
+    </div>
+  )
+}
+
 function PhotoCollage({ photos }) {
   const count = photos.length
-  if (count === 1) return <div style={s.collage}><img src={photos[0]} alt="" style={s.cFull} /></div>
-  if (count === 2) return (
-    <div style={s.collage}>
-      <div style={s.cRow}>
-        <img src={photos[0]} alt="" style={s.cHalf} />
-        <img src={photos[1]} alt="" style={s.cHalf} />
+  if (count === 1) {
+    return <div style={s.collage}><SmartPhoto src={photos[0]} height={380} radius={12} /></div>
+  }
+  if (count === 2) {
+    return (
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ flex: 1 }}><SmartPhoto src={photos[0]} height={260} radius={10} /></div>
+        <div style={{ flex: 1 }}><SmartPhoto src={photos[1]} height={260} radius={10} /></div>
       </div>
-    </div>
-  )
-  if (count === 3) return (
-    <div style={s.collage}>
-      <img src={photos[0]} alt="" style={s.cTopWide} />
-      <div style={s.cRow}>
-        <img src={photos[1]} alt="" style={s.cHalf} />
-        <img src={photos[2]} alt="" style={s.cHalf} />
+    )
+  }
+  if (count === 3) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <SmartPhoto src={photos[0]} height={300} radius={12} />
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ flex: 1 }}><SmartPhoto src={photos[1]} height={200} radius={10} /></div>
+          <div style={{ flex: 1 }}><SmartPhoto src={photos[2]} height={200} radius={10} /></div>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
   return (
-    <div style={s.collage}>
-      <div style={s.cRow}><img src={photos[0]} alt="" style={s.cHalf} /><img src={photos[1]} alt="" style={s.cHalf} /></div>
-      <div style={s.cRow}><img src={photos[2]} alt="" style={s.cHalf} /><img src={photos[3]} alt="" style={s.cHalf} /></div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ flex: 1 }}><SmartPhoto src={photos[0]} height={220} radius={10} /></div>
+        <div style={{ flex: 1 }}><SmartPhoto src={photos[1]} height={220} radius={10} /></div>
+      </div>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ flex: 1 }}><SmartPhoto src={photos[2]} height={220} radius={10} /></div>
+        <div style={{ flex: 1 }}><SmartPhoto src={photos[3]} height={220} radius={10} /></div>
+      </div>
       {count > 4 && <p style={s.morePhotos}>+ {count - 4} more</p>}
     </div>
   )
@@ -634,6 +684,14 @@ const s = {
   brandStripCol: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
   brandStripName: { fontSize: '1.5rem', color: '#1a1a1a', fontWeight: '700', margin: 0, fontFamily: 'Georgia, serif', lineHeight: 1.1 },
   brandStripTagline: { fontSize: '0.85rem', color: '#b09070', fontWeight: '600', fontStyle: 'italic', margin: 0, marginTop: '4px', letterSpacing: '0.02em' },
+
+  /* Shared eyebrow pill (matches the rest of app) */
+  dayPill: {
+    display: 'inline-block', fontSize: '0.72rem', fontWeight: '700',
+    color: '#c89060', textTransform: 'uppercase', letterSpacing: '0.15em',
+    backgroundColor: '#fbeede', padding: '5px 12px', borderRadius: '20px',
+    marginBottom: '12px',
+  },
 
   /* MAGAZINE template */
   heroMag: { width: '100%', height: '500px', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' },
@@ -713,6 +771,7 @@ const s = {
     transition: 'transform 0.2s',
   },
   polaroidImg: { width: '180px', height: '180px', objectFit: 'cover', display: 'block' },
+  polaroidImgWrap: { position: 'relative', width: '180px', height: '180px', overflow: 'hidden', backgroundColor: '#1a1a1a' },
 
   polaroidPersp: { display: 'flex', flexDirection: 'column', gap: '12px' },
   polaroidNote: {
@@ -797,6 +856,11 @@ const s = {
   splitSideHeader: { display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '14px', borderBottom: '3px solid' },
   splitSideAv: { width: '52px', height: '52px', borderRadius: '50%' },
   splitSideLabel: { fontSize: '0.7rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '600', margin: 0 },
+  splitSideTag: {
+    display: 'inline-block', fontSize: '0.65rem', fontWeight: '700',
+    textTransform: 'uppercase', letterSpacing: '0.15em',
+    padding: '3px 10px', borderRadius: '16px', marginBottom: '4px',
+  },
   splitSideName: { fontSize: '1.15rem', fontWeight: '800', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0, marginTop: '2px' },
 
   splitPhotosStack: { display: 'flex', flexDirection: 'column', gap: '8px' },
