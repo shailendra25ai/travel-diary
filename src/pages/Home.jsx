@@ -99,9 +99,13 @@ export default function Home({ user }) {
     <div style={s.container}>
       {/* HERO */}
       <div style={s.hero}>
+        <div style={s.heroBg} />
         <div style={s.heroOverlay}>
           <div style={s.heroTop}>
-            <img src="/logo-wide.png" alt="Mosaic" style={s.logo} onClick={() => navigate('/home')} />
+            <div style={s.heroLogoRow} onClick={() => navigate('/home')}>
+              <img src="/logo-icon.png" alt="" style={s.heroLogoIcon} />
+              <span style={s.heroLogoText}>Mosaic</span>
+            </div>
             <button onClick={handleSignOut} style={s.signOutBtn} title="Sign out">
               <img src={user.photoURL} alt={user.displayName} style={s.avatar} />
             </button>
@@ -239,26 +243,52 @@ const s = {
 
   /* HERO */
   hero: {
-    background: 'linear-gradient(135deg, #c89060 0%, #b09070 35%, #2d4a8a 100%)',
-    minHeight: '320px', position: 'relative',
+    position: 'relative', minHeight: '420px',
+    overflow: 'hidden', backgroundColor: '#1a1a1a',
+  },
+  heroBg: {
+    position: 'absolute', inset: 0,
+    backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80)',
+    backgroundSize: 'cover', backgroundPosition: 'center',
+    animation: 'kenBurns 30s ease-in-out infinite alternate',
   },
   heroOverlay: {
-    minHeight: '320px',
-    background: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(0,0,0,0.15) 0%, transparent 50%)',
+    position: 'relative', minHeight: '420px',
+    background: 'linear-gradient(to bottom, rgba(20,15,10,0.35) 0%, rgba(20,15,10,0.5) 50%, rgba(20,15,10,0.85) 100%)',
     display: 'flex', flexDirection: 'column',
   },
   heroTop: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '14px 20px',
   },
-  logo: { height: '40px', objectFit: 'contain', cursor: 'pointer', filter: 'brightness(0) invert(1)' },
+  heroLogoRow: {
+    display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+  },
+  heroLogoIcon: { width: '34px', height: '34px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' },
+  heroLogoText: {
+    fontSize: '1.4rem', fontWeight: '700', color: '#fff',
+    fontFamily: 'Georgia, serif', letterSpacing: '0.01em',
+    textShadow: '0 2px 6px rgba(0,0,0,0.4)',
+  },
   signOutBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: 0 },
-  avatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)' },
+  avatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.6)', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' },
 
-  heroContent: { padding: '32px 24px 48px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-  greeting: { fontSize: '1.05rem', color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
-  greetingName: { fontSize: '2.6rem', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: '700', lineHeight: '1.1', marginTop: '4px' },
-  tagline: { fontSize: '0.95rem', color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', marginTop: '14px', fontFamily: 'Georgia, serif' },
+  heroContent: {
+    padding: '40px 24px 56px', flex: 1, display: 'flex',
+    flexDirection: 'column', justifyContent: 'flex-end',
+    animation: 'fadeSlideUp 0.6s ease-out',
+  },
+  greeting: { fontSize: '1.05rem', color: 'rgba(255,255,255,0.9)', fontWeight: '500', textShadow: '0 2px 6px rgba(0,0,0,0.4)' },
+  greetingName: {
+    fontSize: '2.8rem', color: '#fff', fontFamily: 'Georgia, serif',
+    fontWeight: '700', lineHeight: '1.1', marginTop: '4px',
+    textShadow: '0 2px 12px rgba(0,0,0,0.4)',
+  },
+  tagline: {
+    fontSize: '0.98rem', color: '#f0d9b8', fontStyle: 'italic',
+    marginTop: '14px', fontFamily: 'Georgia, serif',
+    textShadow: '0 2px 6px rgba(0,0,0,0.4)', letterSpacing: '0.01em',
+  },
 
   /* BODY */
   body: { maxWidth: '720px', margin: '0 auto', padding: '24px 16px 48px' },
