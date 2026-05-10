@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { doc, getDoc, collection, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '../firebase'
+import { MapDisplay } from '../components/MapComponents'
 
 function getDaysBetween(startDate, endDate) {
   const days = []
@@ -87,6 +88,9 @@ export default function Trip({ user }) {
 
       <div style={styles.body}>
         <h2 style={styles.tripTitle}>{trip.title}</h2>
+        {trip.location?.name && (
+          <p style={styles.location}>📍 {trip.location.name}</p>
+        )}
         <p style={styles.dates}>
           {formatDate(trip.startDate)}
           {trip.openEnded ? ' · Open-ended' : trip.endDate ? ` → ${formatDate(trip.endDate)}` : ''}
@@ -115,6 +119,12 @@ export default function Trip({ user }) {
             Everyone
           </button>
         </div>
+
+        {trip.location?.lat && trip.location?.lng && (
+          <div style={{ marginBottom: '20px' }}>
+            <MapDisplay lat={trip.location.lat} lng={trip.location.lng} height={160} />
+          </div>
+        )}
 
         <button onClick={() => navigate(`/trips/${tripId}/recap`)} style={styles.recapBtn}>
           ✨ Generate AI Recap
@@ -266,6 +276,7 @@ const styles = {
   body: { maxWidth: '600px', margin: '0 auto', padding: '24px' },
   tripTitle: { fontSize: '1.8rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' },
   dates: { fontSize: '0.95rem', color: '#888', marginBottom: '16px' },
+  location: { fontSize: '0.95rem', color: '#666', marginBottom: '6px', fontWeight: '500' },
   memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' },
   memberAvatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #fff', boxShadow: '0 0 0 1px #eee' },
   recapBtn: {

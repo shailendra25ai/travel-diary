@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore'
 import { auth, db } from '../firebase'
+import { TripsMap } from '../components/MapComponents'
 
 export default function Home({ user }) {
   const navigate = useNavigate()
   const [trips, setTrips] = useState([])
   const [loading, setLoading] = useState(true)
+  const [view, setView] = useState('list')
 
   useEffect(() => {
     const q = query(
@@ -22,9 +24,7 @@ export default function Home({ user }) {
     return unsubscribe
   }, [user.uid])
 
-  const handleSignOut = async () => {
-    await signOut(auth)
-  }
+  const handleSignOut = async () => { await signOut(auth) }
 
   const formatDate = (d) => {
     if (!d) return ''
@@ -47,6 +47,24 @@ export default function Home({ user }) {
           <button onClick={() => navigate('/trips/create')} style={styles.createBtn}>+ New Trip</button>
         </div>
 
+        {/* View toggle */}
+        {!loading && trips.length > 0 && (
+          <div style={styles.viewToggle}>
+            <button
+              onClick={() => setView('list')}
+              style={view === 'list' ? styles.toggleActive : styles.toggleInactive}
+            >
+              ☰ List
+            </button>
+            <button
+              onClick={() => setView('map')}
+              style={view === 'map' ? styles.toggleActive : styles.toggleInactive}
+            >
+              🌍 Map
+            </button>
+          </div>
+        )}
+
         {loading && <p style={styles.hint}>Loading your trips...</p>}
 
         {!loading && trips.length === 0 && (
@@ -57,25 +75,34 @@ export default function Home({ user }) {
           </div>
         )}
 
-        <div style={styles.tripGrid}>
-          {trips.map(trip => (
-            <div key={trip.id} style={styles.tripCard} onClick={() => navigate(`/trips/${trip.id}`)}>
-              {trip.coverPhotoURL ? (
-                <img src={trip.coverPhotoURL} alt={trip.title} style={styles.tripCover} />
-              ) : (
-                <div style={styles.tripCoverPlaceholder} />
-              )}
-              <div style={styles.tripInfo}>
-                <h3 style={styles.tripTitle}>{trip.title}</h3>
-                <p style={styles.tripDates}>
-                  {formatDate(trip.startDate)}
-                  {trip.openEnded ? ' · Open-ended' : trip.endDate ? ` → ${formatDate(trip.endDate)}` : ''}
-                </p>
-                <p style={styles.tripMembers}>{trip.members.length} {trip.members.length === 1 ? 'member' : 'members'}</p>
+        {view === 'map' && trips.length > 0 && (
+          <TripsMap trips={trips} onPinClick={(id) => navigate(`/trips/${id}`)} />
+        )}
+
+        {view === 'list' && (
+          <div style={styles.tripGrid}>
+            {trips.map(trip => (
+              <div key={trip.id} style={styles.tripCard} onClick={() => navigate(`/trips/${trip.id}`)}>
+                {trip.coverPhotoURL ? (
+                  <img src={trip.coverPhotoURL} alt={trip.title} style={styles.tripCover} />
+                ) : (
+                  <div style={styles.tripCoverPlaceholder} />
+                )}
+                <div style={styles.tripInfo}>
+                  <h3 style={styles.tripTitle}>{trip.title}</h3>
+                  {trip.location?.name && (
+                    <p style={styles.tripLocation}>📍 {trip.location.name}</p>
+                  )}
+                  <p style={styles.tripDates}>
+                    {formatDate(trip.startDate)}
+                    {trip.openEnded ? ' · Open-ended' : trip.endDate ? ` → ${formatDate(trip.endDate)}` : ''}
+                  </p>
+                  <p style={styles.tripMembers}>{trip.members.length} {trip.members.length === 1 ? 'member' : 'members'}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -87,19 +114,34 @@ const styles = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
   },
-  logo: { fontSize: '1.3rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0 },
   logoBig: { height: '44px', objectFit: 'contain' },
   userRow: { display: 'flex', alignItems: 'center', gap: '12px' },
   avatar: { width: '32px', height: '32px', borderRadius: '50%' },
   signOutBtn: { fontSize: '0.85rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer' },
-  body: { maxWidth: '600px', margin: '0 auto', padding: '28px 24px' },
-  topRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
+  body: { maxWidth: '720px', margin: '0 auto', padding: '28px 20px' },
+  topRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   heading: { fontSize: '1.3rem', fontWeight: '700', color: '#1a1a1a' },
   createBtn: {
     backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
     borderRadius: '8px', padding: '10px 18px', fontSize: '0.9rem',
     fontWeight: '500', cursor: 'pointer',
   },
+
+  viewToggle: {
+    display: 'flex', gap: '4px', backgroundColor: '#ede9e3',
+    borderRadius: '10px', padding: '4px', marginBottom: '20px',
+  },
+  toggleActive: {
+    flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
+    backgroundColor: '#fff', fontWeight: '600', fontSize: '0.9rem',
+    color: '#1a1a1a', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+  },
+  toggleInactive: {
+    flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
+    backgroundColor: 'transparent', fontWeight: '500', fontSize: '0.9rem',
+    color: '#888', cursor: 'pointer',
+  },
+
   empty: { textAlign: 'center', padding: '48px 0' },
   emptyTagline: { fontSize: '0.78rem', color: '#b09070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '24px', fontStyle: 'italic' },
   emptyText: { fontSize: '1rem', color: '#555', marginBottom: '8px' },
@@ -114,6 +156,7 @@ const styles = {
   tripCoverPlaceholder: { width: '100%', height: '100px', backgroundColor: '#e8e4df' },
   tripInfo: { padding: '16px' },
   tripTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' },
+  tripLocation: { fontSize: '0.85rem', color: '#666', marginBottom: '4px' },
   tripDates: { fontSize: '0.85rem', color: '#888', marginBottom: '4px' },
   tripMembers: { fontSize: '0.8rem', color: '#aaa' },
 }

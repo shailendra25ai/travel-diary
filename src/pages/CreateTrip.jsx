@@ -3,54 +3,72 @@ import { useNavigate } from 'react-router-dom'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../firebase'
+import { LocationPicker } from '../components/MapComponents'
 
 function generateInviteCode() {
   return Math.random().toString(36).substring(2, 10)
 }
 
+const TOTAL_STEPS = 5
+
 export default function CreateTrip({ user }) {
   const navigate = useNavigate()
-  const [title, setTitle] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [openEnded, setOpenEnded] = useState(false)
-  const [coverFile, setCoverFile] = useState(null)
-  const [coverPreview, setCoverPreview] = useState(null)
+  const [step, setStep] = useState(1)
+  const [trip, setTrip] = useState({
+    title: '',
+    location: null,
+    startDate: '',
+    endDate: '',
+    openEnded: false,
+    coverFile: null,
+    coverPreview: null,
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const handleCoverChange = (e) => {
-    const file = e.target.files[0]
+  const update = (key, val) => setTrip(prev => ({ ...prev, [key]: val }))
+
+  const handleCoverChange = (file) => {
     if (file) {
-      setCoverFile(file)
-      setCoverPreview(URL.createObjectURL(file))
+      update('coverFile', file)
+      update('coverPreview', URL.createObjectURL(file))
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!title.trim()) { setError('Please enter a trip title.'); return }
-    if (!startDate) { setError('Please enter a start date.'); return }
-    if (!openEnded && !endDate) { setError('Please enter an end date or mark the trip as open-ended.'); return }
+  const goNext = () => {
+    setError('')
+    if (step === 1 && !trip.title.trim()) return setError('Please give your trip a name.')
+    if (step === 2 && !trip.location) return setError('Please pick a destination.')
+    if (step === 3 && !trip.startDate) return setError('Please pick a start date.')
+    if (step === 3 && !trip.openEnded && !trip.endDate) return setError('Please pick an end date or mark it as open-ended.')
+    if (step === 3 && !trip.openEnded && trip.endDate < trip.startDate) return setError('End date can\'t be before start date.')
+    setStep(s => Math.min(s + 1, TOTAL_STEPS))
+  }
 
+  const goBack = () => {
+    setError('')
+    setStep(s => Math.max(s - 1, 1))
+  }
+
+  const handleCreate = async () => {
     setSaving(true)
     setError('')
-
     try {
       let coverPhotoURL = ''
-      if (coverFile) {
-        const storageRef = ref(storage, `covers/${user.uid}/${Date.now()}_${coverFile.name}`)
-        await uploadBytes(storageRef, coverFile)
+      if (trip.coverFile) {
+        const storageRef = ref(storage, `covers/${user.uid}/${Date.now()}_${trip.coverFile.name}`)
+        await uploadBytes(storageRef, trip.coverFile)
         coverPhotoURL = await getDownloadURL(storageRef)
       }
 
       const inviteCode = generateInviteCode()
 
       const tripRef = await addDoc(collection(db, 'trips'), {
-        title: title.trim(),
-        startDate,
-        endDate: openEnded ? '' : endDate,
-        openEnded,
+        title: trip.title.trim(),
+        location: trip.location,
+        startDate: trip.startDate,
+        endDate: trip.openEnded ? '' : trip.endDate,
+        openEnded: trip.openEnded,
         coverPhotoURL,
         inviteCode,
         createdBy: user.uid,
@@ -58,10 +76,7 @@ export default function CreateTrip({ user }) {
         createdByPhoto: user.photoURL,
         members: [user.uid],
         memberDetails: {
-          [user.uid]: {
-            name: user.displayName,
-            photo: user.photoURL,
-          }
+          [user.uid]: { name: user.displayName, photo: user.photoURL }
         },
         createdAt: serverTimestamp(),
       })
@@ -75,110 +90,215 @@ export default function CreateTrip({ user }) {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <button onClick={() => navigate('/home')} style={styles.back}>← Back</button>
-        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} />
-        <div style={{ width: 60 }} />
+    <div style={s.container}>
+      <div style={s.header}>
+        <button onClick={() => step === 1 ? navigate('/home') : goBack()} style={s.back}>
+          {step === 1 ? '✕ Cancel' : '← Back'}
+        </button>
+        <img src="/logo-wide.png" alt="Mosaic" style={s.logoBig} />
+        <div style={{ width: 70 }} />
       </div>
 
-      <div style={styles.body}>
-        <h2 style={styles.heading}>Create a new trip</h2>
+      {/* Progress bar */}
+      <div style={s.progressWrap}>
+        <div style={s.progressTrack}>
+          <div style={{ ...s.progressBar, width: `${(step / TOTAL_STEPS) * 100}%` }} />
+        </div>
+        <p style={s.progressText}>Step {step} of {TOTAL_STEPS}</p>
+      </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Trip title</label>
+      <div style={s.body}>
+        {step === 1 && (
+          <Step heading="What's this trip called?" hint="Give it a name your group will recognise.">
             <input
-              style={styles.input}
               type="text"
+              autoFocus
+              value={trip.title}
+              onChange={e => update('title', e.target.value)}
               placeholder="e.g. Goa with the gang"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
+              style={s.bigInput}
+              onKeyDown={e => e.key === 'Enter' && goNext()}
             />
-          </div>
+          </Step>
+        )}
 
-          <div style={styles.field}>
-            <label style={styles.label}>Start date</label>
-            <input
-              style={styles.input}
-              type="date"
-              value={startDate}
-              onChange={e => setStartDate(e.target.value)}
-            />
-          </div>
+        {step === 2 && (
+          <Step heading="Where are you going?" hint="Search for a city, country, or place.">
+            <LocationPicker value={trip.location} onChange={loc => update('location', loc)} />
+          </Step>
+        )}
 
-          <div style={styles.field}>
-            <label style={styles.label}>End date</label>
-            <input
-              style={styles.input}
-              type="date"
-              value={endDate}
-              onChange={e => setEndDate(e.target.value)}
-              disabled={openEnded}
-            />
-            <label style={styles.checkLabel}>
+        {step === 3 && (
+          <Step heading="When are you traveling?" hint="Dates help us organise your daily entries.">
+            <div style={s.dateGroup}>
+              <div style={s.dateField}>
+                <label style={s.dateLabel}>Start date</label>
+                <input
+                  type="date"
+                  value={trip.startDate}
+                  onChange={e => update('startDate', e.target.value)}
+                  style={s.dateInput}
+                />
+              </div>
+              <div style={s.dateField}>
+                <label style={s.dateLabel}>End date</label>
+                <input
+                  type="date"
+                  value={trip.endDate}
+                  onChange={e => update('endDate', e.target.value)}
+                  disabled={trip.openEnded}
+                  style={{ ...s.dateInput, opacity: trip.openEnded ? 0.4 : 1 }}
+                />
+              </div>
+            </div>
+            <label style={s.checkRow}>
               <input
                 type="checkbox"
-                checked={openEnded}
-                onChange={e => setOpenEnded(e.target.checked)}
+                checked={trip.openEnded}
+                onChange={e => update('openEnded', e.target.checked)}
                 style={{ marginRight: 8 }}
               />
-              Open-ended (no fixed end date)
+              <span>This trip is open-ended (no fixed end date)</span>
             </label>
-          </div>
+          </Step>
+        )}
 
-          <div style={styles.field}>
-            <label style={styles.label}>Cover photo <span style={styles.optional}>(optional)</span></label>
-            {coverPreview && (
-              <img src={coverPreview} alt="Cover preview" style={styles.preview} />
-            )}
+        {step === 4 && (
+          <Step heading="Add a cover photo" hint="Optional — you can do this later.">
+            <label htmlFor="coverUpload" style={s.dropZone}>
+              {trip.coverPreview ? (
+                <img src={trip.coverPreview} alt="Cover" style={s.coverPreview} />
+              ) : (
+                <>
+                  <div style={s.dropIcon}>📷</div>
+                  <p style={s.dropText}>Tap to choose a photo</p>
+                  <p style={s.dropHint}>or drag and drop</p>
+                </>
+              )}
+            </label>
             <input
+              id="coverUpload"
               type="file"
               accept="image/*"
-              onChange={handleCoverChange}
-              style={styles.fileInput}
+              onChange={e => handleCoverChange(e.target.files[0])}
+              style={{ display: 'none' }}
             />
-          </div>
+            {trip.coverPreview && (
+              <button onClick={() => { update('coverFile', null); update('coverPreview', null) }} style={s.linkBtn}>
+                Remove photo
+              </button>
+            )}
+          </Step>
+        )}
 
-          {error && <p style={styles.error}>{error}</p>}
+        {step === 5 && (
+          <Step heading="All set?" hint="Quick review before we create your trip.">
+            <div style={s.reviewCard}>
+              {trip.coverPreview && <img src={trip.coverPreview} alt="" style={s.reviewCover} />}
+              <div style={s.reviewBody}>
+                <p style={s.reviewLabel}>Trip name</p>
+                <p style={s.reviewValue}>{trip.title}</p>
+                <p style={s.reviewLabel}>Destination</p>
+                <p style={s.reviewValue}>📍 {trip.location?.name}</p>
+                <p style={s.reviewLabel}>Dates</p>
+                <p style={s.reviewValue}>
+                  {trip.startDate} {trip.openEnded ? '· Open-ended' : trip.endDate ? `→ ${trip.endDate}` : ''}
+                </p>
+              </div>
+            </div>
+          </Step>
+        )}
 
-          <button type="submit" style={styles.submitBtn} disabled={saving}>
-            {saving ? 'Creating trip...' : 'Create trip'}
-          </button>
+        {error && <p style={s.error}>{error}</p>}
 
-        </form>
+        <div style={s.btnRow}>
+          {step < TOTAL_STEPS && (
+            <button onClick={goNext} style={s.continueBtn}>
+              {step === 4 && !trip.coverFile ? 'Skip & continue' : 'Continue'}
+            </button>
+          )}
+          {step === TOTAL_STEPS && (
+            <button onClick={handleCreate} style={s.continueBtn} disabled={saving}>
+              {saving ? 'Creating...' : 'Create my trip ✨'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-const styles = {
-  container: { minHeight: '100vh', backgroundColor: '#f9f6f1' },
+function Step({ heading, hint, children }) {
+  return (
+    <div style={s.step}>
+      <h2 style={s.heading}>{heading}</h2>
+      {hint && <p style={s.hint}>{hint}</p>}
+      <div style={s.stepContent}>{children}</div>
+    </div>
+  )
+}
+
+const s = {
+  container: { minHeight: '100vh', backgroundColor: '#f9f6f1', display: 'flex', flexDirection: 'column' },
   header: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
+    padding: '12px 20px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
   },
-  logo: { fontSize: '1.3rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0 },
-  logoBig: { height: '44px', objectFit: 'contain' },
-  back: { background: 'none', border: 'none', fontSize: '0.95rem', color: '#555', cursor: 'pointer' },
-  body: { maxWidth: '480px', margin: '0 auto', padding: '32px 24px' },
-  heading: { fontSize: '1.5rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '28px' },
-  form: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  field: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  label: { fontSize: '0.9rem', fontWeight: '600', color: '#333' },
-  optional: { fontWeight: '400', color: '#999' },
-  input: {
-    padding: '12px 14px', borderRadius: '8px', border: '1.5px solid #ddd',
-    fontSize: '1rem', color: '#1a1a1a', backgroundColor: '#fff', outline: 'none',
+  logoBig: { height: '36px', objectFit: 'contain' },
+  back: { background: 'none', border: 'none', fontSize: '0.9rem', color: '#666', cursor: 'pointer', fontWeight: '500' },
+
+  progressWrap: { padding: '16px 20px 0', maxWidth: '480px', margin: '0 auto', width: '100%' },
+  progressTrack: { width: '100%', height: '4px', backgroundColor: '#ede9e3', borderRadius: '2px', overflow: 'hidden' },
+  progressBar: { height: '100%', backgroundColor: '#1a1a1a', borderRadius: '2px', transition: 'width 0.3s' },
+  progressText: { fontSize: '0.75rem', color: '#999', marginTop: '8px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em' },
+
+  body: { maxWidth: '480px', margin: '0 auto', padding: '32px 20px 48px', width: '100%', flex: 1, display: 'flex', flexDirection: 'column' },
+  step: { display: 'flex', flexDirection: 'column', flex: 1 },
+  heading: { fontSize: '1.7rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px', fontFamily: 'Georgia, serif', lineHeight: '1.25' },
+  hint: { fontSize: '0.95rem', color: '#888', marginBottom: '32px', lineHeight: '1.5' },
+  stepContent: { display: 'flex', flexDirection: 'column', gap: '16px' },
+
+  bigInput: {
+    width: '100%', padding: '16px 18px', borderRadius: '12px',
+    border: '1.5px solid #ddd', fontSize: '1.1rem',
+    color: '#1a1a1a', backgroundColor: '#fff', outline: 'none',
+    fontFamily: 'inherit',
   },
-  checkLabel: { fontSize: '0.9rem', color: '#555', display: 'flex', alignItems: 'center' },
-  fileInput: { fontSize: '0.9rem', color: '#555' },
-  preview: { width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' },
-  error: { color: '#e53e3e', fontSize: '0.9rem' },
-  submitBtn: {
-    backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
-    borderRadius: '8px', padding: '14px', fontSize: '1rem',
-    fontWeight: '600', cursor: 'pointer', marginTop: '8px',
+
+  dateGroup: { display: 'flex', flexDirection: 'column', gap: '14px' },
+  dateField: { display: 'flex', flexDirection: 'column', gap: '6px' },
+  dateLabel: { fontSize: '0.8rem', fontWeight: '600', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  dateInput: {
+    width: '100%', padding: '14px 16px', borderRadius: '10px',
+    border: '1.5px solid #ddd', fontSize: '1rem',
+    color: '#1a1a1a', backgroundColor: '#fff', outline: 'none',
+  },
+  checkRow: { display: 'flex', alignItems: 'center', fontSize: '0.9rem', color: '#555', marginTop: '4px', cursor: 'pointer' },
+
+  dropZone: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    minHeight: '220px', padding: '32px', borderRadius: '14px',
+    border: '2px dashed #ccc', backgroundColor: '#fff', cursor: 'pointer',
+    overflow: 'hidden',
+  },
+  dropIcon: { fontSize: '2.5rem', marginBottom: '12px', opacity: 0.5 },
+  dropText: { fontSize: '1rem', color: '#555', fontWeight: '600' },
+  dropHint: { fontSize: '0.85rem', color: '#aaa', marginTop: '4px' },
+  coverPreview: { width: '100%', height: '220px', objectFit: 'cover', borderRadius: '8px' },
+  linkBtn: { background: 'none', border: 'none', color: '#888', fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline', alignSelf: 'flex-start' },
+
+  reviewCard: { backgroundColor: '#fff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #eee' },
+  reviewCover: { width: '100%', height: '160px', objectFit: 'cover' },
+  reviewBody: { padding: '20px' },
+  reviewLabel: { fontSize: '0.72rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '14px' },
+  reviewValue: { fontSize: '1rem', color: '#1a1a1a', marginTop: '2px' },
+
+  error: { color: '#e53e3e', fontSize: '0.9rem', marginTop: '12px' },
+
+  btnRow: { marginTop: 'auto', paddingTop: '32px' },
+  continueBtn: {
+    width: '100%', backgroundColor: '#1a1a1a', color: '#fff',
+    border: 'none', borderRadius: '12px', padding: '16px',
+    fontSize: '1rem', fontWeight: '700', cursor: 'pointer',
   },
 }
