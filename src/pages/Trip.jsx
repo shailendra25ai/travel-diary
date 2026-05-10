@@ -90,6 +90,7 @@ export default function Trip({ user }) {
       )}
 
       <div style={styles.body}>
+        <p style={styles.eyebrow}>✦ &nbsp;Trip</p>
         <div style={styles.titleRow}>
           <h2 style={styles.tripTitle}>{trip.title}</h2>
           {trip.createdBy === user.uid && (
@@ -298,25 +299,34 @@ const styles = {
     width: '100%', height: '100%', objectFit: 'contain',
   },
   body: { maxWidth: '600px', margin: '0 auto', padding: '24px' },
+  eyebrow: {
+    display: 'inline-block', fontSize: '0.72rem', fontWeight: '700',
+    color: '#c89060', textTransform: 'uppercase', letterSpacing: '0.15em',
+    backgroundColor: '#fbeede', padding: '5px 12px', borderRadius: '20px',
+    marginBottom: '14px',
+  },
   titleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '6px' },
-  tripTitle: { fontSize: '1.8rem', fontWeight: '700', color: '#1a1a1a', flex: 1 },
+  tripTitle: { fontSize: '1.9rem', fontWeight: '700', color: '#1a1a1a', flex: 1, fontFamily: 'Georgia, serif', lineHeight: '1.2' },
   editBtn: {
-    fontSize: '0.85rem', color: '#555', backgroundColor: '#f0f0f0',
+    fontSize: '0.82rem', color: '#7a8a5a', backgroundColor: '#eef0e8',
     border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',
-    fontWeight: '500', whiteSpace: 'nowrap', marginTop: '8px',
+    fontWeight: '700', whiteSpace: 'nowrap', marginTop: '8px',
   },
   dates: { fontSize: '0.95rem', color: '#888', marginBottom: '16px' },
-  location: { fontSize: '0.95rem', color: '#666', marginBottom: '6px', fontWeight: '500' },
+  location: { fontSize: '0.95rem', color: '#b09070', marginBottom: '6px', fontWeight: '600' },
   memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' },
   memberAvatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #fff', boxShadow: '0 0 0 1px #eee' },
   recapBtn: {
-    width: '100%', backgroundColor: '#fff', color: '#1a1a1a',
-    border: '1.5px solid #1a1a1a', borderRadius: '8px', padding: '12px',
-    fontSize: '0.95rem', fontWeight: '600', cursor: 'pointer', marginBottom: '24px',
+    width: '100%',
+    background: 'linear-gradient(135deg, #c89060 0%, #b09070 50%, #2d4a8a 100%)',
+    color: '#fff', border: 'none', borderRadius: '14px', padding: '16px',
+    fontSize: '1rem', fontWeight: '700', cursor: 'pointer', marginBottom: '24px',
+    boxShadow: '0 6px 18px rgba(200,144,96,0.28)', letterSpacing: '0.02em',
   },
   inviteBtn: {
-    fontSize: '0.8rem', color: '#555', backgroundColor: '#f0f0f0',
-    border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',
+    fontSize: '0.8rem', color: '#2d4a8a', backgroundColor: '#e3eaf5',
+    border: 'none', borderRadius: '20px', padding: '7px 14px', cursor: 'pointer',
+    fontWeight: '700',
   },
   viewToggle: {
     display: 'flex', backgroundColor: '#ede9e3', borderRadius: '10px',
@@ -324,8 +334,8 @@ const styles = {
   },
   toggleActive: {
     flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
-    backgroundColor: '#fff', fontWeight: '600', fontSize: '0.9rem',
-    color: '#1a1a1a', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    backgroundColor: '#fff', fontWeight: '700', fontSize: '0.9rem',
+    color: '#c89060', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
   },
   toggleInactive: {
     flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
@@ -335,14 +345,16 @@ const styles = {
   timeline: { display: 'flex', flexDirection: 'column', gap: '28px' },
   dayBlock: { display: 'flex', flexDirection: 'column', gap: '12px' },
   dayHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  dayLabel: { fontSize: '0.82rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  dayLabel: { fontSize: '0.82rem', fontWeight: '700', color: '#b09070', textTransform: 'uppercase', letterSpacing: '0.1em' },
   addEntryBtn: {
-    fontSize: '0.8rem', color: '#fff', backgroundColor: '#1a1a1a',
-    border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',
+    fontSize: '0.8rem', color: '#fff',
+    background: 'linear-gradient(135deg, #c89060 0%, #b09070 100%)',
+    border: 'none', borderRadius: '20px', padding: '7px 16px', cursor: 'pointer',
+    fontWeight: '700', boxShadow: '0 2px 8px rgba(200,144,96,0.3)',
   },
   noEntry: { fontSize: '0.9rem', color: '#ccc', fontStyle: 'italic' },
   perspectiveRow: { display: 'flex', alignItems: 'center', gap: '8px' },
-  perspectiveLabel: { fontSize: '0.8rem', color: '#aaa' },
+  perspectiveLabel: { fontSize: '0.78rem', color: '#b09070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em' },
   perspectiveAvatar: {
     width: '32px', height: '32px', borderRadius: '50%', padding: 0,
     border: 'none', cursor: 'pointer', outlineOffset: '2px', background: 'none',
@@ -353,8 +365,8 @@ const styles = {
   },
   entryHeader: { display: 'flex', alignItems: 'center', gap: '10px' },
   entryAvatar: { width: '36px', height: '36px', borderRadius: '50%' },
-  entryName: { fontSize: '0.95rem', fontWeight: '600', color: '#1a1a1a' },
-  entryLocation: { fontSize: '0.8rem', color: '#888' },
+  entryName: { fontSize: '0.98rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif' },
+  entryLocation: { fontSize: '0.8rem', color: '#b09070', fontWeight: '500' },
   photoGrid: { display: 'flex', gap: '6px', flexWrap: 'wrap' },
   entryPhoto: { width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' },
   entryText: { fontSize: '0.95rem', color: '#444', lineHeight: '1.6' },

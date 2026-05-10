@@ -62,9 +62,13 @@ export default function Trips({ user }) {
       </div>
 
       <div style={styles.body}>
-        <div style={styles.topRow}>
-          <h2 style={styles.heading}>Your trips</h2>
-          <button onClick={() => navigate('/trips/create')} style={styles.createBtn}>+ New Trip</button>
+        <div style={styles.headerBlock}>
+          <p style={styles.eyebrow}>✈ &nbsp;My Journeys</p>
+          <div style={styles.topRow}>
+            <h2 style={styles.heading}>Your trips</h2>
+            <button onClick={() => navigate('/trips/create')} style={styles.createBtn}>+ New Trip</button>
+          </div>
+          <p style={styles.subheading}>Every journey, beautifully kept.</p>
         </div>
 
         {!loading && trips.length > 0 && (
@@ -137,12 +141,22 @@ const styles = {
   avatar: { width: '32px', height: '32px', borderRadius: '50%' },
   signOutBtn: { fontSize: '0.85rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer' },
   body: { maxWidth: '720px', margin: '0 auto', padding: '28px 20px' },
-  topRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-  heading: { fontSize: '1.3rem', fontWeight: '700', color: '#1a1a1a' },
+  headerBlock: { marginBottom: '24px' },
+  eyebrow: {
+    display: 'inline-block', fontSize: '0.72rem', fontWeight: '700',
+    color: '#c89060', textTransform: 'uppercase', letterSpacing: '0.15em',
+    backgroundColor: '#fbeede', padding: '5px 12px', borderRadius: '20px',
+    marginBottom: '12px',
+  },
+  topRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' },
+  heading: { fontSize: '1.85rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', lineHeight: '1.2' },
+  subheading: { fontSize: '0.95rem', color: '#7a8a5a', fontStyle: 'italic', fontWeight: '500' },
   createBtn: {
-    backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
-    borderRadius: '8px', padding: '10px 18px', fontSize: '0.9rem',
-    fontWeight: '500', cursor: 'pointer',
+    background: 'linear-gradient(135deg, #c89060 0%, #b09070 100%)',
+    color: '#fff', border: 'none',
+    borderRadius: '20px', padding: '10px 18px', fontSize: '0.88rem',
+    fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap',
+    boxShadow: '0 3px 10px rgba(200,144,96,0.3)',
   },
   viewToggle: {
     display: 'flex', gap: '4px', backgroundColor: '#ede9e3',
@@ -150,8 +164,8 @@ const styles = {
   },
   toggleActive: {
     flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
-    backgroundColor: '#fff', fontWeight: '600', fontSize: '0.9rem',
-    color: '#1a1a1a', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    backgroundColor: '#fff', fontWeight: '700', fontSize: '0.9rem',
+    color: '#c89060', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
   },
   toggleInactive: {
     flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
@@ -180,13 +194,13 @@ const styles = {
   tripCoverPlaceholder: { width: '100%', height: '100px', backgroundColor: '#e8e4df' },
   tripInfo: { padding: '16px' },
   tripTopRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px', gap: '8px' },
-  tripTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1a1a1a', flex: 1 },
+  tripTitle: { fontSize: '1.2rem', fontWeight: '700', color: '#1a1a1a', flex: 1, fontFamily: 'Georgia, serif' },
   deleteBtn: {
     background: 'none', border: 'none', fontSize: '1rem',
     cursor: 'pointer', padding: '4px 8px', borderRadius: '6px',
     color: '#888', opacity: 0.6,
   },
-  tripLocation: { fontSize: '0.85rem', color: '#666', marginBottom: '4px' },
+  tripLocation: { fontSize: '0.85rem', color: '#b09070', fontWeight: '600', marginBottom: '4px' },
   tripDates: { fontSize: '0.85rem', color: '#888', marginBottom: '4px' },
   tripMembers: { fontSize: '0.8rem', color: '#aaa' },
 }
