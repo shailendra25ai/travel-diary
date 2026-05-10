@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthState } from './hooks/useAuthState'
 import Login from './pages/Login'
 import Home from './pages/Home'
+import Trips from './pages/Trips'
 import CreateTrip from './pages/CreateTrip'
 import EditTrip from './pages/EditTrip'
 import Trip from './pages/Trip'
@@ -25,6 +26,7 @@ function App() {
     <Routes>
       <Route path="/" element={user ? <Navigate to="/home" /> : <Login />} />
       <Route path="/home" element={user ? <Home user={user} /> : <Navigate to="/" />} />
+      <Route path="/trips" element={user ? <Trips user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/create" element={user ? <CreateTrip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId" element={user ? <Trip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId/edit" element={user ? <EditTrip user={user} /> : <Navigate to="/" />} />

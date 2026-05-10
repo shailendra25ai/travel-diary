@@ -1,15 +1,51 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, getDocs } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, orderBy, collectionGroup, limit } from 'firebase/firestore'
 import { auth, db } from '../firebase'
-import { TripsMap } from '../components/MapComponents'
+import BottomNav from '../components/BottomNav'
+
+const TRAVEL_QUOTES = [
+  { quote: "Travel is the only thing you buy that makes you richer.", author: "Anonymous" },
+  { quote: "We travel not to escape life, but for life not to escape us.", author: "Anonymous" },
+  { quote: "Memories made together last longer than memories made alone.", author: "Mosaic" },
+  { quote: "The journey is best measured in friends, not miles.", author: "Tim Cahill" },
+  { quote: "To travel is to live.", author: "Hans Christian Andersen" },
+  { quote: "Life is short and the world is wide.", author: "Anonymous" },
+]
+
+function pickQuote(seed) {
+  return TRAVEL_QUOTES[seed % TRAVEL_QUOTES.length]
+}
+
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 5) return 'Late night,'
+  if (h < 12) return 'Good morning,'
+  if (h < 17) return 'Good afternoon,'
+  if (h < 21) return 'Good evening,'
+  return 'Good night,'
+}
+
+function getMemoryUnlocks(trips) {
+  const today = new Date()
+  const unlocks = []
+  trips.forEach(trip => {
+    if (!trip.startDate) return
+    const start = new Date(trip.startDate)
+    const yearsAgo = today.getFullYear() - start.getFullYear()
+    if (yearsAgo < 1) return
+    if (start.getMonth() === today.getMonth() && Math.abs(start.getDate() - today.getDate()) <= 3) {
+      unlocks.push({ trip, yearsAgo })
+    }
+  })
+  return unlocks.sort((a, b) => a.yearsAgo - b.yearsAgo).slice(0, 3)
+}
 
 export default function Home({ user }) {
   const navigate = useNavigate()
   const [trips, setTrips] = useState([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState('list')
 
   useEffect(() => {
     const q = query(
@@ -17,185 +53,285 @@ export default function Home({ user }) {
       where('members', 'array-contains', user.uid),
       orderBy('createdAt', 'desc')
     )
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setTrips(snapshot.docs.map(d => ({ id: d.id, ...d.data() })))
+    const unsub = onSnapshot(q, (snap) => {
+      setTrips(snap.docs.map(d => ({ id: d.id, ...d.data() })))
       setLoading(false)
     })
-    return unsubscribe
+    return unsub
   }, [user.uid])
 
   const handleSignOut = async () => { await signOut(auth) }
 
-  const handleDeleteTrip = async (e, trip) => {
-    e.stopPropagation()
-    if (trip.createdBy !== user.uid) {
-      alert('Only the trip creator can delete this trip.')
-      return
-    }
-    const confirmed = window.confirm(`Delete "${trip.title}"? This will remove all entries and recaps for this trip. This cannot be undone.`)
-    if (!confirmed) return
+  // Stats
+  const tripsWithLocation = trips.filter(t => t.location?.country)
+  const uniqueCountries = new Set(tripsWithLocation.map(t => t.location.country))
+  const totalDays = trips.reduce((sum, t) => {
+    if (!t.startDate) return sum
+    const start = new Date(t.startDate)
+    const end = t.endDate ? new Date(t.endDate) : start
+    return sum + Math.max(1, Math.ceil((end - start) / 86400000) + 1)
+  }, 0)
 
-    try {
-      // Delete entries subcollection
-      const entriesSnap = await getDocs(collection(db, 'trips', trip.id, 'entries'))
-      await Promise.all(entriesSnap.docs.map(d => deleteDoc(d.ref)))
+  // Featured trip = most recent trip with cover photo
+  const featuredTrip = trips.find(t => t.coverPhotoURL)
 
-      // Delete the trip itself
-      await deleteDoc(doc(db, 'trips', trip.id))
-    } catch (err) {
-      console.error(err)
-      alert('Could not delete the trip. Please try again.')
-    }
-  }
+  // Memory unlocks
+  const memories = getMemoryUnlocks(trips)
 
-  const formatDate = (d) => {
-    if (!d) return ''
-    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
+  // Quote of the day (deterministic by date)
+  const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000)
+  const todayQuote = pickQuote(dayOfYear)
+
+  const firstName = user.displayName?.split(' ')[0] || 'traveler'
+
+  // Today's status
+  const today = new Date().toISOString().split('T')[0]
+  const currentTrip = trips.find(t => {
+    const s = t.startDate
+    const e = t.endDate || t.startDate
+    return today >= s && (today <= e || t.openEnded)
+  })
+  const upcomingTrip = trips
+    .filter(t => t.startDate > today)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))[0]
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} onClick={() => navigate('/home')} />
-        <div style={styles.userRow}>
-          <img src={user.photoURL} alt={user.displayName} style={styles.avatar} />
-          <button onClick={handleSignOut} style={styles.signOutBtn}>Sign out</button>
+    <div style={s.container}>
+      {/* HERO */}
+      <div style={s.hero}>
+        <div style={s.heroOverlay}>
+          <div style={s.heroTop}>
+            <img src="/logo-wide.png" alt="Mosaic" style={s.logo} onClick={() => navigate('/home')} />
+            <button onClick={handleSignOut} style={s.signOutBtn} title="Sign out">
+              <img src={user.photoURL} alt={user.displayName} style={s.avatar} />
+            </button>
+          </div>
+
+          <div style={s.heroContent}>
+            <p style={s.greeting}>{greeting()}</p>
+            <h1 style={s.greetingName}>{firstName}.</h1>
+            <p style={s.tagline}>Many pieces. One unforgettable trip.</p>
+          </div>
         </div>
       </div>
 
-      <div style={styles.body}>
-        <div style={styles.topRow}>
-          <h2 style={styles.heading}>Your trips</h2>
-          <button onClick={() => navigate('/trips/create')} style={styles.createBtn}>+ New Trip</button>
-        </div>
+      <div style={s.body}>
 
-        {/* View toggle */}
-        {!loading && trips.length > 0 && (
-          <div style={styles.viewToggle}>
-            <button
-              onClick={() => setView('list')}
-              style={view === 'list' ? styles.toggleActive : styles.toggleInactive}
-            >
-              ☰ List
-            </button>
-            <button
-              onClick={() => setView('map')}
-              style={view === 'map' ? styles.toggleActive : styles.toggleInactive}
-            >
-              🌍 Map
-            </button>
+        {/* Today's status */}
+        {currentTrip && (
+          <div style={s.statusCard} onClick={() => navigate(`/trips/${currentTrip.id}`)}>
+            <div style={s.statusBadge}>● Currently traveling</div>
+            <p style={s.statusTitle}>{currentTrip.title}</p>
+            {currentTrip.location?.name && <p style={s.statusLoc}>📍 {currentTrip.location.name}</p>}
+            <p style={s.statusHint}>Tap to add today's diary →</p>
           </div>
         )}
 
-        {loading && <p style={styles.hint}>Loading your trips...</p>}
-
-        {!loading && trips.length === 0 && (
-          <div style={styles.empty}>
-            <p style={styles.emptyTagline}>Many pieces. One unforgettable trip.</p>
-            <p style={styles.emptyText}>No trips yet.</p>
-            <p style={styles.hint}>Create your first trip and invite your travel group.</p>
+        {!currentTrip && upcomingTrip && (
+          <div style={s.statusCard} onClick={() => navigate(`/trips/${upcomingTrip.id}`)}>
+            <div style={{ ...s.statusBadge, backgroundColor: '#c89060' }}>↗ Upcoming</div>
+            <p style={s.statusTitle}>{upcomingTrip.title}</p>
+            {upcomingTrip.location?.name && <p style={s.statusLoc}>📍 {upcomingTrip.location.name}</p>}
+            <p style={s.statusHint}>
+              {Math.ceil((new Date(upcomingTrip.startDate) - new Date()) / 86400000)} days to go →
+            </p>
           </div>
         )}
 
-        {view === 'map' && trips.length > 0 && (
-          <TripsMap trips={trips} onPinClick={(id) => navigate(`/trips/${id}`)} />
-        )}
-
-        {view === 'list' && (
-          <div style={styles.tripGrid}>
-            {trips.map(trip => (
-              <div key={trip.id} style={styles.tripCard} onClick={() => navigate(`/trips/${trip.id}`)}>
-                {trip.coverPhotoURL ? (
-                  <img src={trip.coverPhotoURL} alt={trip.title} style={styles.tripCover} />
-                ) : (
-                  <div style={styles.tripCoverPlaceholder} />
-                )}
-                <div style={styles.tripInfo}>
-                  <div style={styles.tripTopRow}>
-                    <h3 style={styles.tripTitle}>{trip.title}</h3>
-                    {trip.createdBy === user.uid && (
-                      <button
-                        onClick={(e) => handleDeleteTrip(e, trip)}
-                        style={styles.deleteBtn}
-                        title="Delete trip"
-                      >
-                        🗑
-                      </button>
-                    )}
-                  </div>
-                  {trip.location?.name && (
-                    <p style={styles.tripLocation}>📍 {trip.location.name}</p>
-                  )}
-                  <p style={styles.tripDates}>
-                    {formatDate(trip.startDate)}
-                    {trip.openEnded ? ' · Open-ended' : trip.endDate ? ` → ${formatDate(trip.endDate)}` : ''}
-                  </p>
-                  <p style={styles.tripMembers}>{trip.members.length} {trip.members.length === 1 ? 'member' : 'members'}</p>
+        {/* Memory Unlocks */}
+        {memories.length > 0 && (
+          <section style={s.section}>
+            <p style={s.sectionLabel}>✨ On this day</p>
+            {memories.map(({ trip, yearsAgo }) => (
+              <div
+                key={trip.id}
+                style={{ ...s.memoryCard, backgroundImage: trip.coverPhotoURL ? `url(${trip.coverPhotoURL})` : '' }}
+                onClick={() => navigate(`/trips/${trip.id}`)}
+              >
+                <div style={s.memoryOverlay}>
+                  <p style={s.memoryYears}>{yearsAgo} {yearsAgo === 1 ? 'year' : 'years'} ago</p>
+                  <h3 style={s.memoryTitle}>{trip.title}</h3>
+                  {trip.location?.name && <p style={s.memoryLoc}>📍 {trip.location.name}</p>}
+                  <p style={s.memoryCta}>Relive this trip →</p>
                 </div>
               </div>
             ))}
+          </section>
+        )}
+
+        {/* Featured trip card (if no memory unlocks) */}
+        {memories.length === 0 && featuredTrip && (
+          <section style={s.section}>
+            <p style={s.sectionLabel}>★ Featured</p>
+            <div
+              style={{ ...s.memoryCard, backgroundImage: `url(${featuredTrip.coverPhotoURL})` }}
+              onClick={() => navigate(`/trips/${featuredTrip.id}`)}
+            >
+              <div style={s.memoryOverlay}>
+                <h3 style={s.memoryTitle}>{featuredTrip.title}</h3>
+                {featuredTrip.location?.name && <p style={s.memoryLoc}>📍 {featuredTrip.location.name}</p>}
+                <p style={s.memoryCta}>Open trip →</p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Quote of the day */}
+        <div style={s.quoteCard}>
+          <p style={s.quoteMark}>“</p>
+          <p style={s.quoteText}>{todayQuote.quote}</p>
+          <p style={s.quoteAuthor}>— {todayQuote.author}</p>
+        </div>
+
+        {/* Stats */}
+        {trips.length > 0 && (
+          <section style={s.section}>
+            <p style={s.sectionLabel}>Your journey so far</p>
+            <div style={s.statsGrid}>
+              <Stat number={trips.length} label={trips.length === 1 ? 'Trip' : 'Trips'} />
+              <Stat number={uniqueCountries.size} label={uniqueCountries.size === 1 ? 'Country' : 'Countries'} />
+              <Stat number={totalDays} label="Days" />
+            </div>
+          </section>
+        )}
+
+        {/* CTAs */}
+        <section style={s.actionsRow}>
+          <button onClick={() => navigate('/trips/create')} style={s.primaryAction}>
+            + Start a new trip
+          </button>
+          {trips.length > 0 && (
+            <button onClick={() => navigate('/trips')} style={s.secondaryAction}>
+              See all trips →
+            </button>
+          )}
+        </section>
+
+        {/* Empty state */}
+        {!loading && trips.length === 0 && (
+          <div style={s.emptyState}>
+            <p style={s.emptyHeading}>Your story starts here.</p>
+            <p style={s.emptyText}>
+              Capture trips with the people who matter. Watch them become beautiful, shareable memories.
+            </p>
           </div>
         )}
+
       </div>
+
+      <div style={{ height: '80px' }} /> {/* spacer for bottom nav */}
+      <BottomNav />
     </div>
   )
 }
 
-const styles = {
-  container: { minHeight: '100vh', backgroundColor: '#f9f6f1' },
-  header: {
+function Stat({ number, label }) {
+  return (
+    <div style={s.stat}>
+      <p style={s.statNumber}>{number}</p>
+      <p style={s.statLabel}>{label}</p>
+    </div>
+  )
+}
+
+const s = {
+  container: { minHeight: '100vh', backgroundColor: '#faf7f2' },
+
+  /* HERO */
+  hero: {
+    background: 'linear-gradient(135deg, #c89060 0%, #b09070 35%, #2d4a8a 100%)',
+    minHeight: '320px', position: 'relative',
+  },
+  heroOverlay: {
+    minHeight: '320px',
+    background: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(0,0,0,0.15) 0%, transparent 50%)',
+    display: 'flex', flexDirection: 'column',
+  },
+  heroTop: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
+    padding: '14px 20px',
   },
-  logoBig: { height: '44px', objectFit: 'contain', cursor: 'pointer' },
-  userRow: { display: 'flex', alignItems: 'center', gap: '12px' },
-  avatar: { width: '32px', height: '32px', borderRadius: '50%' },
-  signOutBtn: { fontSize: '0.85rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer' },
-  body: { maxWidth: '720px', margin: '0 auto', padding: '28px 20px' },
-  topRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-  heading: { fontSize: '1.3rem', fontWeight: '700', color: '#1a1a1a' },
-  createBtn: {
+  logo: { height: '40px', objectFit: 'contain', cursor: 'pointer', filter: 'brightness(0) invert(1)' },
+  signOutBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: 0 },
+  avatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)' },
+
+  heroContent: { padding: '32px 24px 48px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+  greeting: { fontSize: '1.05rem', color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+  greetingName: { fontSize: '2.6rem', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: '700', lineHeight: '1.1', marginTop: '4px' },
+  tagline: { fontSize: '0.95rem', color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', marginTop: '14px', fontFamily: 'Georgia, serif' },
+
+  /* BODY */
+  body: { maxWidth: '720px', margin: '0 auto', padding: '24px 16px 48px' },
+
+  /* Status card */
+  statusCard: {
+    backgroundColor: '#fff', borderRadius: '14px', padding: '18px 20px',
+    border: '1px solid #ebe5dc', boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    cursor: 'pointer', marginBottom: '20px',
+  },
+  statusBadge: {
+    display: 'inline-block', backgroundColor: '#7a8a5a', color: '#fff',
+    padding: '4px 10px', borderRadius: '12px', fontSize: '0.72rem',
+    fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px',
+  },
+  statusTitle: { fontSize: '1.2rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', marginBottom: '4px' },
+  statusLoc: { fontSize: '0.9rem', color: '#666', marginBottom: '8px' },
+  statusHint: { fontSize: '0.85rem', color: '#b09070', fontWeight: '600' },
+
+  /* Sections */
+  section: { marginBottom: '24px' },
+  sectionLabel: { fontSize: '0.72rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '12px' },
+
+  /* Memory card */
+  memoryCard: {
+    height: '220px', borderRadius: '16px', backgroundSize: 'cover',
+    backgroundPosition: 'center', backgroundColor: '#1a1a1a',
+    cursor: 'pointer', overflow: 'hidden', position: 'relative',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.12)', marginBottom: '12px',
+  },
+  memoryOverlay: {
+    position: 'absolute', inset: 0,
+    background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.85) 100%)',
+    padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+  },
+  memoryYears: { fontSize: '0.78rem', color: '#c89060', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '6px' },
+  memoryTitle: { fontSize: '1.6rem', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: '700', lineHeight: '1.2' },
+  memoryLoc: { fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', marginTop: '6px' },
+  memoryCta: { fontSize: '0.85rem', color: '#fff', fontWeight: '600', marginTop: '12px' },
+
+  /* Quote */
+  quoteCard: {
+    backgroundColor: '#fff', borderRadius: '14px', padding: '24px',
+    border: '1px solid #ebe5dc', textAlign: 'center', marginBottom: '24px',
+  },
+  quoteMark: { fontSize: '2.5rem', color: '#c89060', fontFamily: 'Georgia, serif', lineHeight: '0.5', marginBottom: '4px' },
+  quoteText: { fontSize: '1rem', color: '#444', lineHeight: '1.7', fontStyle: 'italic', fontFamily: 'Georgia, serif' },
+  quoteAuthor: { fontSize: '0.78rem', color: '#999', marginTop: '12px', fontWeight: '600' },
+
+  /* Stats */
+  statsGrid: { display: 'flex', gap: '10px' },
+  stat: {
+    flex: 1, backgroundColor: '#fff', borderRadius: '12px',
+    padding: '16px 12px', textAlign: 'center', border: '1px solid #ebe5dc',
+  },
+  statNumber: { fontSize: '1.8rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', lineHeight: 1 },
+  statLabel: { fontSize: '0.72rem', color: '#999', marginTop: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' },
+
+  /* CTAs */
+  actionsRow: { display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' },
+  primaryAction: {
     backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
-    borderRadius: '8px', padding: '10px 18px', fontSize: '0.9rem',
-    fontWeight: '500', cursor: 'pointer',
+    borderRadius: '12px', padding: '16px', fontSize: '1rem',
+    fontWeight: '700', cursor: 'pointer',
+  },
+  secondaryAction: {
+    backgroundColor: 'transparent', color: '#1a1a1a',
+    border: '1.5px solid #1a1a1a', borderRadius: '12px',
+    padding: '14px', fontSize: '0.95rem', fontWeight: '600', cursor: 'pointer',
   },
 
-  viewToggle: {
-    display: 'flex', gap: '4px', backgroundColor: '#ede9e3',
-    borderRadius: '10px', padding: '4px', marginBottom: '20px',
-  },
-  toggleActive: {
-    flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
-    backgroundColor: '#fff', fontWeight: '600', fontSize: '0.9rem',
-    color: '#1a1a1a', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-  },
-  toggleInactive: {
-    flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
-    backgroundColor: 'transparent', fontWeight: '500', fontSize: '0.9rem',
-    color: '#888', cursor: 'pointer',
-  },
-
-  empty: { textAlign: 'center', padding: '48px 0' },
-  emptyTagline: { fontSize: '0.78rem', color: '#b09070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '24px', fontStyle: 'italic' },
-  emptyText: { fontSize: '1rem', color: '#555', marginBottom: '8px' },
-  hint: { fontSize: '0.9rem', color: '#aaa' },
-  tripGrid: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  tripCard: {
-    backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden',
-    border: '1px solid #eee', cursor: 'pointer',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-  },
-  tripCover: { width: '100%', height: '160px', objectFit: 'cover' },
-  tripCoverPlaceholder: { width: '100%', height: '100px', backgroundColor: '#e8e4df' },
-  tripInfo: { padding: '16px' },
-  tripTopRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px', gap: '8px' },
-  tripTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1a1a1a', flex: 1 },
-  deleteBtn: {
-    background: 'none', border: 'none', fontSize: '1rem',
-    cursor: 'pointer', padding: '4px 8px', borderRadius: '6px',
-    color: '#888', opacity: 0.6,
-  },
-  tripLocation: { fontSize: '0.85rem', color: '#666', marginBottom: '4px' },
-  tripDates: { fontSize: '0.85rem', color: '#888', marginBottom: '4px' },
-  tripMembers: { fontSize: '0.8rem', color: '#aaa' },
+  /* Empty state */
+  emptyState: { textAlign: 'center', padding: '40px 16px' },
+  emptyHeading: { fontSize: '1.4rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', marginBottom: '8px' },
+  emptyText: { fontSize: '0.95rem', color: '#666', lineHeight: '1.7', maxWidth: '420px', margin: '0 auto' },
 }
