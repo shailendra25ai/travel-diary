@@ -244,7 +244,7 @@ export default function Home({ user }) {
       </div>
 
       <div style={{ height: '80px' }} /> {/* spacer for bottom nav */}
-      <BottomNav />
+      <BottomNav user={user} />
     </div>
   )
 }

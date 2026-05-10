@@ -10,6 +10,8 @@ import JoinTrip from './pages/JoinTrip'
 import AddEntry from './pages/AddEntry'
 import GenerateRecap from './pages/GenerateRecap'
 import ShareRecap from './pages/ShareRecap'
+import AdminFeedback from './pages/AdminFeedback'
+import FeedbackWidget from './components/FeedbackWidget'
 
 function App() {
   const { user, loading } = useAuthState()
@@ -23,6 +25,7 @@ function App() {
   }
 
   return (
+    <>
     <Routes>
       <Route path="/" element={user ? <Navigate to="/home" /> : <Login />} />
       <Route path="/home" element={user ? <Home user={user} /> : <Navigate to="/" />} />
@@ -34,7 +37,10 @@ function App() {
       <Route path="/trips/:tripId/recap" element={user ? <GenerateRecap user={user} /> : <Navigate to="/" />} />
       <Route path="/join/:inviteCode" element={<JoinTrip user={user} />} />
       <Route path="/share/:shareCode" element={<ShareRecap />} />
+      <Route path="/admin/feedback" element={user ? <AdminFeedback user={user} /> : <Navigate to="/" />} />
     </Routes>
+    <FeedbackWidget user={user} />
+    </>
   )
 }
 

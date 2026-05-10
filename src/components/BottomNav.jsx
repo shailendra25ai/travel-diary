@@ -1,6 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 
-export default function BottomNav() {
+const OWNER_EMAIL = 'shailendra.25ai@gmail.com'
+
+export default function BottomNav({ user }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -9,12 +11,17 @@ export default function BottomNav() {
     { id: 'trips', label: 'Trips', path: '/trips', icon: '◫' },
   ]
 
+  if (user?.email === OWNER_EMAIL) {
+    tabs.push({ id: 'admin', label: 'Admin', path: '/admin/feedback', icon: '⚙' })
+  }
+
   return (
     <nav style={styles.nav}>
       <div style={styles.inner}>
         {tabs.map(tab => {
           const isActive = location.pathname === tab.path ||
-            (tab.path === '/trips' && location.pathname.startsWith('/trips'))
+            (tab.path === '/trips' && location.pathname.startsWith('/trips')) ||
+            (tab.path === '/admin/feedback' && location.pathname.startsWith('/admin'))
           return (
             <button
               key={tab.id}

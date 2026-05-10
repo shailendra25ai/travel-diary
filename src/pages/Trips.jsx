@@ -125,7 +125,7 @@ export default function Trips({ user }) {
       </div>
 
       <div style={{ height: '80px' }} />
-      <BottomNav />
+      <BottomNav user={user} />
     </div>
   )
 }
