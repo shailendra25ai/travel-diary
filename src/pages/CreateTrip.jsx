@@ -95,7 +95,7 @@ export default function CreateTrip({ user }) {
         <button onClick={() => step === 1 ? navigate('/home') : goBack()} style={s.back}>
           {step === 1 ? '✕ Cancel' : '← Back'}
         </button>
-        <img src="/logo-wide.png" alt="Mosaic" style={s.logoBig} />
+        <img src="/logo-wide.png" alt="Mosaic" style={s.logoBig} onClick={() => navigate('/home')} />
         <div style={{ width: 70 }} />
       </div>
 
@@ -244,7 +244,7 @@ const s = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '12px 20px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
   },
-  logoBig: { height: '36px', objectFit: 'contain' },
+  logoBig: { height: '36px', objectFit: 'contain', cursor: 'pointer' },
   back: { background: 'none', border: 'none', fontSize: '0.9rem', color: '#666', cursor: 'pointer', fontWeight: '500' },
 
   progressWrap: { padding: '16px 20px 0', maxWidth: '480px', margin: '0 auto', width: '100%' },

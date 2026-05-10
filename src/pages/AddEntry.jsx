@@ -70,7 +70,7 @@ export default function AddEntry({ user }) {
     <div style={styles.container}>
       <div style={styles.header}>
         <button onClick={() => navigate(`/trips/${tripId}`)} style={styles.back}>← Back</button>
-        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} />
+        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} onClick={() => navigate('/home')} />
         <div style={{ width: 60 }} />
       </div>
 
@@ -139,7 +139,7 @@ const styles = {
     padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
   },
   logo: { fontSize: '1.3rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0 },
-  logoBig: { height: '44px', objectFit: 'contain' },
+  logoBig: { height: '44px', objectFit: 'contain', cursor: 'pointer' },
   back: { background: 'none', border: 'none', fontSize: '0.95rem', color: '#555', cursor: 'pointer' },
   body: { maxWidth: '480px', margin: '0 auto', padding: '32px 24px' },
   dateLabel: { fontSize: '0.85rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' },

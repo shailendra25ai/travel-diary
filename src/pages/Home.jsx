@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { TripsMap } from '../components/MapComponents'
 
@@ -26,6 +26,28 @@ export default function Home({ user }) {
 
   const handleSignOut = async () => { await signOut(auth) }
 
+  const handleDeleteTrip = async (e, trip) => {
+    e.stopPropagation()
+    if (trip.createdBy !== user.uid) {
+      alert('Only the trip creator can delete this trip.')
+      return
+    }
+    const confirmed = window.confirm(`Delete "${trip.title}"? This will remove all entries and recaps for this trip. This cannot be undone.`)
+    if (!confirmed) return
+
+    try {
+      // Delete entries subcollection
+      const entriesSnap = await getDocs(collection(db, 'trips', trip.id, 'entries'))
+      await Promise.all(entriesSnap.docs.map(d => deleteDoc(d.ref)))
+
+      // Delete the trip itself
+      await deleteDoc(doc(db, 'trips', trip.id))
+    } catch (err) {
+      console.error(err)
+      alert('Could not delete the trip. Please try again.')
+    }
+  }
+
   const formatDate = (d) => {
     if (!d) return ''
     return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -34,7 +56,7 @@ export default function Home({ user }) {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} />
+        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} onClick={() => navigate('/home')} />
         <div style={styles.userRow}>
           <img src={user.photoURL} alt={user.displayName} style={styles.avatar} />
           <button onClick={handleSignOut} style={styles.signOutBtn}>Sign out</button>
@@ -89,7 +111,18 @@ export default function Home({ user }) {
                   <div style={styles.tripCoverPlaceholder} />
                 )}
                 <div style={styles.tripInfo}>
-                  <h3 style={styles.tripTitle}>{trip.title}</h3>
+                  <div style={styles.tripTopRow}>
+                    <h3 style={styles.tripTitle}>{trip.title}</h3>
+                    {trip.createdBy === user.uid && (
+                      <button
+                        onClick={(e) => handleDeleteTrip(e, trip)}
+                        style={styles.deleteBtn}
+                        title="Delete trip"
+                      >
+                        🗑
+                      </button>
+                    )}
+                  </div>
                   {trip.location?.name && (
                     <p style={styles.tripLocation}>📍 {trip.location.name}</p>
                   )}
@@ -114,7 +147,7 @@ const styles = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
   },
-  logoBig: { height: '44px', objectFit: 'contain' },
+  logoBig: { height: '44px', objectFit: 'contain', cursor: 'pointer' },
   userRow: { display: 'flex', alignItems: 'center', gap: '12px' },
   avatar: { width: '32px', height: '32px', borderRadius: '50%' },
   signOutBtn: { fontSize: '0.85rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer' },
@@ -155,7 +188,13 @@ const styles = {
   tripCover: { width: '100%', height: '160px', objectFit: 'cover' },
   tripCoverPlaceholder: { width: '100%', height: '100px', backgroundColor: '#e8e4df' },
   tripInfo: { padding: '16px' },
-  tripTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' },
+  tripTopRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px', gap: '8px' },
+  tripTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1a1a1a', flex: 1 },
+  deleteBtn: {
+    background: 'none', border: 'none', fontSize: '1rem',
+    cursor: 'pointer', padding: '4px 8px', borderRadius: '6px',
+    color: '#888', opacity: 0.6,
+  },
   tripLocation: { fontSize: '0.85rem', color: '#666', marginBottom: '4px' },
   tripDates: { fontSize: '0.85rem', color: '#888', marginBottom: '4px' },
   tripMembers: { fontSize: '0.8rem', color: '#aaa' },

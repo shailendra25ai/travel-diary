@@ -3,6 +3,7 @@ import { useAuthState } from './hooks/useAuthState'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import CreateTrip from './pages/CreateTrip'
+import EditTrip from './pages/EditTrip'
 import Trip from './pages/Trip'
 import JoinTrip from './pages/JoinTrip'
 import AddEntry from './pages/AddEntry'
@@ -26,6 +27,7 @@ function App() {
       <Route path="/home" element={user ? <Home user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/create" element={user ? <CreateTrip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId" element={user ? <Trip user={user} /> : <Navigate to="/" />} />
+      <Route path="/trips/:tripId/edit" element={user ? <EditTrip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId/entries/add" element={user ? <AddEntry user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId/recap" element={user ? <GenerateRecap user={user} /> : <Navigate to="/" />} />
       <Route path="/join/:inviteCode" element={<JoinTrip user={user} />} />

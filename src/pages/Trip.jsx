@@ -78,7 +78,7 @@ export default function Trip({ user }) {
     <div style={styles.container}>
       <div style={styles.header}>
         <button onClick={() => navigate('/home')} style={styles.back}>← Back</button>
-        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} />
+        <img src="/logo-wide.png" alt="Mosaic" style={styles.logoBig} onClick={() => navigate('/home')} />
         <img src={user.photoURL} alt={user.displayName} style={styles.avatar} />
       </div>
 
@@ -87,7 +87,14 @@ export default function Trip({ user }) {
       )}
 
       <div style={styles.body}>
-        <h2 style={styles.tripTitle}>{trip.title}</h2>
+        <div style={styles.titleRow}>
+          <h2 style={styles.tripTitle}>{trip.title}</h2>
+          {trip.createdBy === user.uid && (
+            <button onClick={() => navigate(`/trips/${tripId}/edit`)} style={styles.editBtn} title="Edit trip">
+              ✎ Edit
+            </button>
+          )}
+        </div>
         {trip.location?.name && (
           <p style={styles.location}>📍 {trip.location.name}</p>
         )}
@@ -269,12 +276,18 @@ const styles = {
     padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #eee',
   },
   logo: { fontSize: '1.3rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0 },
-  logoBig: { height: '44px', objectFit: 'contain' },
+  logoBig: { height: '44px', objectFit: 'contain', cursor: 'pointer' },
   back: { background: 'none', border: 'none', fontSize: '0.95rem', color: '#555', cursor: 'pointer' },
   avatar: { width: '32px', height: '32px', borderRadius: '50%' },
   cover: { width: '100%', height: '220px', objectFit: 'cover' },
   body: { maxWidth: '600px', margin: '0 auto', padding: '24px' },
-  tripTitle: { fontSize: '1.8rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' },
+  titleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '6px' },
+  tripTitle: { fontSize: '1.8rem', fontWeight: '700', color: '#1a1a1a', flex: 1 },
+  editBtn: {
+    fontSize: '0.85rem', color: '#555', backgroundColor: '#f0f0f0',
+    border: 'none', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer',
+    fontWeight: '500', whiteSpace: 'nowrap', marginTop: '8px',
+  },
   dates: { fontSize: '0.95rem', color: '#888', marginBottom: '16px' },
   location: { fontSize: '0.95rem', color: '#666', marginBottom: '6px', fontWeight: '500' },
   memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' },
