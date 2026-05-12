@@ -35,10 +35,28 @@ export default function ShareRecap() {
   if (loading) return <div style={s.center}><p style={{ color: '#888' }}>Loading your trip recap...</p></div>
   if (!recap) return <div style={s.center}><p style={{ color: '#888' }}>This recap link is invalid or has expired.</p></div>
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const handleShare = async () => {
+    const shareData = {
+      title: `${recapData?.tripTitle || 'Trip recap'} on Mosaic`,
+      text: `${recap?.title || 'A beautiful trip recap'} — made with Mosaic.`,
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        if (err.name !== 'AbortError') console.error(err)
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } catch (err) {
+        console.error('Clipboard not available:', err)
+      }
+    }
   }
 
   const handleDownloadPDF = async () => {
@@ -131,8 +149,8 @@ export default function ShareRecap() {
       <div style={s.actionBar}>
         <img src="/logo-wide.png" alt="Mosaic" style={s.actionLogoBig} />
         <div style={s.actionBtns}>
-          <button onClick={handleCopyLink} style={s.actionBtn}>
-            {copied ? '✓ Copied' : '🔗 Copy link'}
+          <button onClick={handleShare} style={s.actionBtn}>
+            {copied ? '✓ Copied' : '↗ Share'}
           </button>
           <button onClick={handleDownloadPDF} style={s.actionBtnPrimary} disabled={generatingPDF}>
             {generatingPDF ? '⏳ Generating...' : '⬇ Download PDF'}

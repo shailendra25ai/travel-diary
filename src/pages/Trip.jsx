@@ -56,10 +56,30 @@ export default function Trip({ user }) {
   if (!trip) return <div style={styles.center}><p>Trip not found.</p></div>
 
   const inviteLink = `${window.location.origin}/join/${trip.inviteCode}`
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(inviteLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const handleInvite = async () => {
+    const shareData = {
+      title: `Join "${trip.title}" on Mosaic`,
+      text: `${trip.createdByName?.split(' ')[0] || 'A friend'} invited you to "${trip.title}" on Mosaic — add your perspective to the trip.`,
+      url: inviteLink,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        // User cancelled — no action needed
+        if (err.name !== 'AbortError') console.error(err)
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(inviteLink)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } catch (err) {
+        console.error('Clipboard not available:', err)
+      }
+    }
   }
 
   const days = getDaysBetween(trip.startDate, trip.openEnded ? null : trip.endDate)
@@ -111,8 +131,8 @@ export default function Trip({ user }) {
           {Object.values(trip.memberDetails || {}).map((m, i) => (
             <img key={i} src={m.photo} alt={m.name} title={m.name} style={styles.memberAvatar} />
           ))}
-          <button onClick={handleCopyLink} style={styles.inviteBtn}>
-            {copied ? 'Copied!' : '+ Invite'}
+          <button onClick={handleInvite} style={styles.inviteBtn}>
+            {copied ? 'Copied!' : '↗ Invite'}
           </button>
         </div>
 
