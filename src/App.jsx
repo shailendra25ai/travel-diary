@@ -8,6 +8,7 @@ import EditTrip from './pages/EditTrip'
 import Trip from './pages/Trip'
 import JoinTrip from './pages/JoinTrip'
 import AddEntry from './pages/AddEntry'
+import EditEntry from './pages/EditEntry'
 import GenerateRecap from './pages/GenerateRecap'
 import ShareRecap from './pages/ShareRecap'
 import AdminFeedback from './pages/AdminFeedback'
@@ -34,6 +35,7 @@ function App() {
       <Route path="/trips/:tripId" element={user ? <Trip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId/edit" element={user ? <EditTrip user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId/entries/add" element={user ? <AddEntry user={user} /> : <Navigate to="/" />} />
+      <Route path="/trips/:tripId/entries/:entryId/edit" element={user ? <EditEntry user={user} /> : <Navigate to="/" />} />
       <Route path="/trips/:tripId/recap" element={user ? <GenerateRecap user={user} /> : <Navigate to="/" />} />
       <Route path="/join/:inviteCode" element={<JoinTrip user={user} />} />
       <Route path="/share/:shareCode" element={<ShareRecap />} />

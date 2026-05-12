@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { doc, getDoc, collection, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { doc, getDoc, collection, onSnapshot, orderBy, query, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { MapDisplay } from '../components/MapComponents'
 
@@ -150,6 +150,17 @@ export default function Trip({ user }) {
               userId={user.uid}
               hasMyEntry={myEntryDates.has(day)}
               onAddEntry={() => navigate(`/trips/${tripId}/entries/add?date=${day}`)}
+              onEditEntry={(entryId) => navigate(`/trips/${tripId}/entries/${entryId}/edit`)}
+              onDeleteEntry={async (entry) => {
+                const ok = window.confirm('Delete this entry? This cannot be undone.')
+                if (!ok) return
+                try {
+                  await deleteDoc(doc(db, 'trips', tripId, 'entries', entry.id))
+                } catch (err) {
+                  console.error(err)
+                  alert('Could not delete the entry. Please try again.')
+                }
+              }}
               view={view}
             />
           ))}
@@ -159,7 +170,7 @@ export default function Trip({ user }) {
   )
 }
 
-function DayBlock({ day, dayEntries, userId, hasMyEntry, onAddEntry, view }) {
+function DayBlock({ day, dayEntries, userId, hasMyEntry, onAddEntry, onEditEntry, onDeleteEntry, view }) {
   const myEntry = dayEntries.find(e => e.userId === userId)
   const othersEntries = dayEntries.filter(e => e.userId !== userId)
   const allMembers = dayEntries
@@ -181,7 +192,13 @@ function DayBlock({ day, dayEntries, userId, hasMyEntry, onAddEntry, view }) {
           <p style={styles.noEntry}>No entries yet for this day.</p>
         )}
         {dayEntries.map(entry => (
-          <EntryCard key={entry.id} entry={entry} isMe={entry.userId === userId} />
+          <EntryCard
+            key={entry.id}
+            entry={entry}
+            isMe={entry.userId === userId}
+            onEdit={entry.userId === userId ? () => onEditEntry(entry.id) : null}
+            onDelete={entry.userId === userId ? () => onDeleteEntry(entry) : null}
+          />
         ))}
       </div>
     )
@@ -222,9 +239,19 @@ function DayBlock({ day, dayEntries, userId, hasMyEntry, onAddEntry, view }) {
           )}
 
           {activeEntry
-            ? <EntryCard entry={activeEntry} isMe={activeEntry.userId === userId} />
+            ? <EntryCard
+                entry={activeEntry}
+                isMe={activeEntry.userId === userId}
+                onEdit={activeEntry.userId === userId ? () => onEditEntry(activeEntry.id) : null}
+                onDelete={activeEntry.userId === userId ? () => onDeleteEntry(activeEntry) : null}
+              />
             : myEntry
-              ? <EntryCard entry={myEntry} isMe={true} />
+              ? <EntryCard
+                  entry={myEntry}
+                  isMe={true}
+                  onEdit={() => onEditEntry(myEntry.id)}
+                  onDelete={() => onDeleteEntry(myEntry)}
+                />
               : <EntryCard entry={othersEntries[0]} isMe={false} />
           }
         </>
@@ -233,17 +260,23 @@ function DayBlock({ day, dayEntries, userId, hasMyEntry, onAddEntry, view }) {
   )
 }
 
-function EntryCard({ entry, isMe }) {
+function EntryCard({ entry, isMe, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
     <div style={styles.entryCard}>
       <div style={styles.entryHeader}>
         <img src={entry.userPhoto} alt={entry.userName} style={styles.entryAvatar} />
-        <div>
+        <div style={{ flex: 1 }}>
           <p style={styles.entryName}>{isMe ? 'You' : entry.userName.split(' ')[0]}</p>
           {entry.location && <p style={styles.entryLocation}>📍 {entry.location}</p>}
         </div>
+        {(onEdit || onDelete) && (
+          <div style={styles.entryActions}>
+            {onEdit && <button onClick={onEdit} style={styles.entryActionBtn} title="Edit entry">✎</button>}
+            {onDelete && <button onClick={onDelete} style={{ ...styles.entryActionBtn, color: '#a83a4a' }} title="Delete entry">🗑</button>}
+          </div>
+        )}
       </div>
 
       {entry.photoURLs?.length > 0 && (
@@ -365,6 +398,12 @@ const styles = {
   },
   entryHeader: { display: 'flex', alignItems: 'center', gap: '10px' },
   entryAvatar: { width: '36px', height: '36px', borderRadius: '50%' },
+  entryActions: { display: 'flex', gap: '4px' },
+  entryActionBtn: {
+    background: 'none', border: 'none', fontSize: '0.95rem',
+    color: '#999', cursor: 'pointer', padding: '6px 8px',
+    borderRadius: '6px', opacity: 0.7,
+  },
   entryName: { fontSize: '0.98rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif' },
   entryLocation: { fontSize: '0.8rem', color: '#b09070', fontWeight: '500' },
   photoGrid: { display: 'flex', gap: '6px', flexWrap: 'wrap' },
