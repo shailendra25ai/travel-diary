@@ -135,6 +135,11 @@ export default function Trip({ user }) {
             {copied ? 'Copied!' : '↗ Invite'}
           </button>
         </div>
+        <p style={styles.memberHint}>
+          {trip.members.length === 1
+            ? 'Invite your travel group so everyone can add their perspective.'
+            : `${trip.members.length} members so far. Tap Invite to add more.`}
+        </p>
 
         <div style={styles.viewToggle}>
           <button
@@ -150,6 +155,11 @@ export default function Trip({ user }) {
             Everyone
           </button>
         </div>
+        <p style={styles.hintText}>
+          {view === 'timeline'
+            ? 'Tap a member\'s avatar on any day to see their version of it.'
+            : 'See every member\'s entries stacked together, day by day.'}
+        </p>
 
         {trip.location?.lat && trip.location?.lng && (
           <div style={{ marginBottom: '20px' }}>
@@ -234,7 +244,12 @@ function DayBlock({ day, dayEntries, userId, hasMyEntry, onAddEntry, onEditEntry
       </div>
 
       {dayEntries.length === 0 && (
-        <p style={styles.noEntry}>No entries yet for this day.</p>
+        <div style={styles.noEntryBox}>
+          <p style={styles.noEntry}>No entries yet for this day.</p>
+          {!hasMyEntry && (
+            <p style={styles.noEntryHint}>Be the first to capture this day — tap <strong>+ Add my entry</strong> above.</p>
+          )}
+        </div>
       )}
 
       {dayEntries.length > 0 && (
@@ -367,7 +382,8 @@ const styles = {
   },
   dates: { fontSize: '0.95rem', color: '#888', marginBottom: '16px' },
   location: { fontSize: '0.95rem', color: '#b09070', marginBottom: '6px', fontWeight: '600' },
-  memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' },
+  memberRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' },
+  memberHint: { fontSize: '0.78rem', color: '#7a8a5a', fontStyle: 'italic', marginBottom: '20px' },
   memberAvatar: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #fff', boxShadow: '0 0 0 1px #eee' },
   recapBtn: {
     width: '100%',
@@ -383,7 +399,11 @@ const styles = {
   },
   viewToggle: {
     display: 'flex', backgroundColor: '#ede9e3', borderRadius: '10px',
-    padding: '4px', marginBottom: '24px', gap: '4px',
+    padding: '4px', marginBottom: '8px', gap: '4px',
+  },
+  hintText: {
+    fontSize: '0.78rem', color: '#7a8a5a', fontStyle: 'italic',
+    marginBottom: '20px', paddingLeft: '4px',
   },
   toggleActive: {
     flex: 1, padding: '8px', border: 'none', borderRadius: '8px',
@@ -405,7 +425,12 @@ const styles = {
     border: 'none', borderRadius: '20px', padding: '7px 16px', cursor: 'pointer',
     fontWeight: '700', boxShadow: '0 2px 8px rgba(200,144,96,0.3)',
   },
-  noEntry: { fontSize: '0.9rem', color: '#ccc', fontStyle: 'italic' },
+  noEntry: { fontSize: '0.9rem', color: '#aaa', fontStyle: 'italic' },
+  noEntryBox: {
+    backgroundColor: '#fbfaf6', borderRadius: '12px', padding: '16px 18px',
+    border: '1px dashed #e5dfd0', textAlign: 'center',
+  },
+  noEntryHint: { fontSize: '0.85rem', color: '#7a8a5a', marginTop: '6px' },
   perspectiveRow: { display: 'flex', alignItems: 'center', gap: '8px' },
   perspectiveLabel: { fontSize: '0.78rem', color: '#b09070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em' },
   perspectiveAvatar: {

@@ -13,6 +13,7 @@ import GenerateRecap from './pages/GenerateRecap'
 import ShareRecap from './pages/ShareRecap'
 import AdminFeedback from './pages/AdminFeedback'
 import FeedbackWidget from './components/FeedbackWidget'
+import WelcomeModal from './components/WelcomeModal'
 
 function App() {
   const { user, loading } = useAuthState()
@@ -42,6 +43,7 @@ function App() {
       <Route path="/admin/feedback" element={user ? <AdminFeedback user={user} /> : <Navigate to="/" />} />
     </Routes>
     <FeedbackWidget user={user} />
+    {user && <WelcomeModal user={user} />}
     </>
   )
 }

@@ -234,10 +234,12 @@ export default function Home({ user }) {
         {/* Empty state */}
         {!loading && trips.length === 0 && (
           <div style={s.emptyState}>
+            <div style={s.emptyEmoji}>🧳</div>
             <p style={s.emptyHeading}>Your story starts here.</p>
             <p style={s.emptyText}>
               Capture trips with the people who matter. Watch them become beautiful, shareable memories.
             </p>
+            <div style={s.emptyArrow}>↓ Start with your first trip ↓</div>
           </div>
         )}
 
@@ -410,6 +412,8 @@ const s = {
 
   /* Empty state */
   emptyState: { textAlign: 'center', padding: '40px 16px' },
-  emptyHeading: { fontSize: '1.4rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', marginBottom: '8px' },
-  emptyText: { fontSize: '0.95rem', color: '#666', lineHeight: '1.7', maxWidth: '420px', margin: '0 auto' },
+  emptyEmoji: { fontSize: '3rem', marginBottom: '16px' },
+  emptyHeading: { fontSize: '1.5rem', fontWeight: '700', color: '#1a1a1a', fontFamily: 'Georgia, serif', marginBottom: '8px' },
+  emptyText: { fontSize: '0.95rem', color: '#666', lineHeight: '1.7', maxWidth: '420px', margin: '0 auto 28px' },
+  emptyArrow: { fontSize: '0.85rem', fontWeight: '700', color: '#c89060', letterSpacing: '0.1em' },
 }

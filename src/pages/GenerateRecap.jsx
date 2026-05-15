@@ -69,7 +69,7 @@ export default function GenerateRecap({ user }) {
 
   const handleGenerate = async () => {
     if (entries.length === 0) {
-      setError('No diary entries found. Add some entries before generating a recap.')
+      setError('You need at least 1 diary entry before generating a recap. Add some entries first — the more entries, the richer your story.')
       return
     }
     setStep('generating')
@@ -127,6 +127,7 @@ export default function GenerateRecap({ user }) {
             <p style={styles.subheading}>{trip.title}</p>
 
             <p style={styles.sectionLabel}>① &nbsp;Whose story?</p>
+            <p style={styles.sectionHint}>Pick whose perspective the recap should be told from.</p>
             <div style={styles.modeRow}>
               <div
                 style={{
@@ -157,6 +158,7 @@ export default function GenerateRecap({ user }) {
             </div>
 
             <p style={styles.sectionLabel}>② &nbsp;Pick a style</p>
+            <p style={styles.sectionHint}>This is the look your shareable web page and PDF will use.</p>
             <div style={styles.templateList}>
               {TEMPLATES.map(t => (
                 <div
@@ -303,8 +305,9 @@ const styles = {
   sectionLabel: {
     fontSize: '0.85rem', fontWeight: '700', color: '#b09070',
     textTransform: 'uppercase', letterSpacing: '0.1em',
-    marginBottom: '14px', marginTop: '28px',
+    marginBottom: '6px', marginTop: '28px',
   },
+  sectionHint: { fontSize: '0.82rem', color: '#7a8a5a', fontStyle: 'italic', marginBottom: '14px' },
 
   modeRow: { display: 'flex', gap: '12px', marginBottom: '8px' },
   modeCard: {
